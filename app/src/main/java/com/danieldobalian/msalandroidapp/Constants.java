@@ -7,10 +7,10 @@ package com.danieldobalian.msalandroidapp;
 public class Constants {
 
     /* Azure AD v2 Configs */
-    final static String CLIENT_ID = "074d69f8-eed5-46ed-b577-13a834d0a716";
+    final static String CLIENT_ID = "90c0fe63-bcf2-44d5-8fb7-b8bbc0b29dc6";
     final static String REDIRECT_URI =
-            "ms-auth-074d69f8-eed5-46ed-b577-13a834d0a716://com.danieldobalian.msalandroidapp";
-    final static String SCOPES = "https://graph.microsoft.com/User.Read";
-    final static String MSGRAPH_URL = "https://graph.microsoft.com/v1.0/me";
+            "msal90c0fe63-bcf2-44d5-8fb7-b8bbc0b29dc6://auth";
+    final static String SCOPES = "openid profile";
+    final static String API_URL = "https://graph.microsoft.com/v1.0/me";
 
 }

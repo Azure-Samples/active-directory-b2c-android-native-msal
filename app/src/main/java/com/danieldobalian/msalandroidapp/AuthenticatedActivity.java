@@ -1,11 +1,7 @@
 package com.danieldobalian.msalandroidapp;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -29,56 +25,40 @@ import com.microsoft.identity.client.MsalUiRequiredException;
 import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.User;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.lang.String;
 
 public class AuthenticatedActivity extends AppCompatActivity {
 
+    /* UI & Debugging Variables */
     private static final String TAG = MainActivity.class.getSimpleName();
+    Button apiButton;
+    Button clearCacheButton;
 
+    /* Azure AD variables */
     AppSubClass appState;
     private AuthenticationResult authResult;
     private PublicClientApplication sampleApp;
     String[] scopes;
 
-    Button graphButton;
-    Button clearCacheButton;
-
-    //
-    // =============================================================================================
-    // Core methods
-    // onCreate()
-    // callGraphAPI()
-    // clearCache()
-    // Callback used when checking for a refresh token
-    // =============================================================================================
-    //
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_post_sign_in);
+        setContentView(R.layout.activity_authenticated);
 
-        appState = AppSubClass.getInstance();
-        sampleApp = appState.getPublicClient();
-        authResult = appState.getAuthResult();
-        scopes = Constants.SCOPES.split("\\s+");
-
-        graphButton = (Button) findViewById(R.id.graph);
+        apiButton = (Button) findViewById(R.id.api);
         clearCacheButton = (Button) findViewById(R.id.clearCache);
 
-        graphButton.setOnClickListener(new View.OnClickListener() {
+        apiButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                Toast.makeText(getBaseContext(), getString(R.string.graph), Toast.LENGTH_SHORT)
+                Toast.makeText(getBaseContext(), getString(R.string.api), Toast.LENGTH_SHORT)
                         .show();
 
-                callGraphAPI();
+                callAPI();
             }
         });
 
@@ -89,6 +69,11 @@ public class AuthenticatedActivity extends AppCompatActivity {
             }
         });
 
+        appState = AppSubClass.getInstance();
+        sampleApp = appState.getPublicClient();
+        authResult = appState.getAuthResult();
+        scopes = Constants.SCOPES.split("\\s+");
+
         /* Set Welcome Text */
         Log.d(TAG, "Signed in: " + authResult.getUser().getName());
         ((TextView) findViewById(R.id.welcome)).setText("Welcome, "
@@ -97,16 +82,22 @@ public class AuthenticatedActivity extends AppCompatActivity {
         /* Write the token status (whether or not we received each token) */
         this.updateTokenUI();
 
-        /* Calls Graph, dump out response from UserInfo endpoint into UI */
-        this.callGraphAPI();
+        /* Calls API, dump out response from UserInfo endpoint into UI */
+        this.callAPI();
 
     }
 
-    /* Use Volley to request the /me endpoint from MS Graph
+    // Core Identity methods used by MSAL
+    // ==================================
+    // callAPI() - Calls your api with access token
+    // clearCache() - Clears token cache of this app
+    //
+
+    /* Use Volley to request the /me endpoint from API
     *  Sets the UI to what we get back
     */
-    private void callGraphAPI() {
-        Log.d(TAG, "Starting volley request to graph");
+    private void callAPI() {
+        Log.d(TAG, "Starting volley request to API");
 
         RequestQueue queue = Volley.newRequestQueue(this);
         JSONObject parameters = new JSONObject();
@@ -116,14 +107,14 @@ public class AuthenticatedActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.d(TAG, "Failed to put parameters: " + e.toString());
         }
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, Constants.MSGRAPH_URL,
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, Constants.API_URL,
                 parameters,new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
-                /* Successfully called graph, process data and send to signedIn activity */
+                /* Successfully called API */
                 Log.d(TAG, "Response: " + response.toString());
 
-                updateGraphUI(response);
+                updateAPIUI(response);
             }
         }, new Response.ErrorListener() {
             @Override
@@ -193,20 +184,20 @@ public class AuthenticatedActivity extends AppCompatActivity {
     }
 
     //
-    // =============================================================================================
+    // UI & Helper methods
+    // ==================================
     // Everything below is some kind of helper to update app UI or do non-essential identity tasks
-    // updateGraphUI()
-    // UpdateTokenUI()
-    // hasRefreshToken()
-    // UpdateRefreshTokenUI()
-    // Callback used when checking for a refresh token
-    // =============================================================================================
+    // updateAPIUI() - Updates UI when we get a response from our API
+    // UpdateTokenUI() - Updates UI with token in cache status
+    // hasRefreshToken() - Checks if we have a refresh token in our cache
+    // UpdateRefreshTokenUI() - Updates UI with RT in cache status
+    // getAuthSilentCallback() -
     //
 
-    /* Calls the Microsoft Graph and dumps response into UI */
-    private void updateGraphUI(JSONObject response) {
-        TextView graphText = (TextView) findViewById(R.id.graphData);
-        graphText.setText(response.toString());
+    /* Calls the API and dumps response into UI */
+    private void updateAPIUI(JSONObject response) {
+        TextView apiText = (TextView) findViewById(R.id.apiData);
+        apiText.setText(response.toString());
     }
 
     /* Write the token status (whether or not we received each token) */
@@ -229,7 +220,6 @@ public class AuthenticatedActivity extends AppCompatActivity {
 
             /* Only way to check if we have a refresh token is to actually refresh our tokens */
             hasRefreshToken();
-
         } else {
             Log.d(TAG, "No authResult, something went wrong.");
         }
@@ -288,8 +278,7 @@ public class AuthenticatedActivity extends AppCompatActivity {
     }
 
     /* Callback used in for silent acquireToken calls.
-     * else errors
-     * Sets refresh token ui depending on result
+     * Used in here solely to test whether or not we have a refresh token in the cache
      */
     private AuthenticationCallback getAuthSilentCallback() {
         return new AuthenticationCallback() {

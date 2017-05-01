@@ -1,5 +1,6 @@
 package com.danieldobalian.msalandroidapp;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,19 +14,18 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
+    /* Azure AD variables */
+    private PublicClientApplication sampleApp;
+    private AuthenticationResult authResult;
+    private User currentUser;
+    private String[] scopes;
+
+    /* UI & Debugging Variables */
     private static final String TAG = MainActivity.class.getSimpleName();
     Button callApiButton;
     Button learnMoreButton;
 
-    /* Azure AD variables */
-    private PublicClientApplication sampleApp;
-
-    private User currentUser;
-    private AuthenticationResult authResult;
-
-    String[] scopes;
-
-    /* Get the global state */
+    /* Global App State */
     AppSubClass state;
 
     @Override
@@ -33,12 +33,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        state = (AppSubClass) getApplicationContext();
-
         callApiButton = (Button) findViewById(R.id.callApi);
         learnMoreButton = (Button) findViewById(R.id.learnMore);
-
-        scopes = Constants.SCOPES.split("\\s+");
 
         callApiButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -52,6 +48,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        state = (AppSubClass) getApplicationContext();
+        scopes = Constants.SCOPES.split("\\s+");
+
+        /* Initializes the app context using MSAL */
         sampleApp = state.getPublicClient();
 
         /* Initialize the MSAL App context */
@@ -64,13 +64,16 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    //
+    // Core Identity methods used by MSAL
+    // ==================================
+    // onActivityResult() - handles redirect from System browser
+    // onCallApiClicked() - attempts to get tokens for our api, if it succeeds calls api & updates UI
+    //
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         sampleApp.handleInteractiveRequestRedirect(requestCode, resultCode, data);
-    }
-
-    private void learnMore() {
-        startActivity(new Intent(this, LearnMoreActivity.class));
     }
 
     /* Use MSAL to acquireToken for the end-user
@@ -99,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
                  * Typically, multiple user scenarios depend on app logic to have some
                  * kind of heuristic to determine user to use (or some ui to pick)
                  */
-                interactiveAcquireToken();
+                sampleApp.acquireToken(getActivity(), scopes, getAuthInteractiveCallback());
             }
         } catch (MsalClientException e) {
             /* No token in cache, proceed with normal unauthenticated app experience */
@@ -110,12 +113,17 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void interactiveAcquireToken() {
-        sampleApp.acquireToken(this, scopes, getAuthInteractiveCallback());
-    }
+    //
+    // App callbacks for MSAL
+    // ======================
+    // getActivity() - returns activity so we can acquireToken within a callback
+    // getAuthSilentCallback() - callback defined to handle acquireTokenSilent() case
+    // getAuthInteractiveCallback() - callback defined to handle acquireToken() case
+    //
 
-    /* Starts authenticated intent */
-    private void startAuthenticated() {startActivity(new Intent(this, AuthenticatedActivity.class));}
+    public Activity getActivity() {
+        return this;
+    }
 
     /* Callback used in for silent acquireToken calls.
      * Looks if tokens are in the cache (refreshes if necessary and if we don't forceRefresh)
@@ -149,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
 
                 } else if (exception instanceof MsalUiRequiredException) {
                     /* Tokens expired or no session, retry with interactive */
-                    interactiveAcquireToken();
+                    sampleApp.acquireToken(getActivity(), scopes, getAuthInteractiveCallback());
                 }
             }
 
@@ -161,8 +169,8 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
-    /* Callback used for interactive request.  If suceeds we use the access
-     * token to call the Microsoft Graph. Does not check cache
+    /* Callback used for interactive request.  If succeeds we use the access
+     * token to call the api. Does not check cache.
      */
     private AuthenticationCallback getAuthInteractiveCallback() {
         return new AuthenticationCallback() {
@@ -199,5 +207,21 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "User cancelled login.");
             }
         };
+    }
+
+    //
+    // Activity Helpers
+    // ==================================
+    // learnMore() - starts the learn more activity
+    // startAuthenticated() - starts the authenticated user activity
+    //
+
+    private void learnMore() {
+        startActivity(new Intent(this, LearnMoreActivity.class));
+    }
+
+    /* Starts authenticated intent */
+    private void startAuthenticated() {
+        startActivity(new Intent(this, AuthenticatedActivity.class));
     }
 }

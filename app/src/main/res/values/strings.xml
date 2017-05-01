@@ -11,7 +11,7 @@
     <string name="IT">ID Token:</string>
     <string name="AT">Access Token:</string>
     <string name="RT">Refresh Token:</string>
-    <string name="graph">Calling MS Graph...</string>
+    <string name="api">Calling MS Graph...</string>
     <string name="failedRefresh">Failed to Refresh Token.</string>
 
     <string name="moreInfo">Tested Versions\n\nMSAL: 0.x.x\nAndroid: 18-25\nAndroid Studio: 2.2.3
