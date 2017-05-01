@@ -79,6 +79,8 @@ final class MsalUtils {
     private static final String TOKEN_HASH_ALGORITHM = "SHA256";
 
     static final String CHROME_PACKAGE = "com.android.chrome";
+    static final String QUERY_STRING_SYMBOL = "?";
+    static final String QUERY_STRING_DELIMITER = "&";
 
     /**
      * Private constructor to prevent Util class from being initiated.
@@ -337,6 +339,10 @@ final class MsalUtils {
      */
     static String appendQueryParameterToUrl(final String url, final Map<String, String> requestParams)
             throws UnsupportedEncodingException {
+        if (MsalUtils.isEmpty(url)) {
+            throw new IllegalArgumentException("Empty authority string");
+        }
+
         if (requestParams.isEmpty()) {
             return url;
         }
@@ -346,7 +352,15 @@ final class MsalUtils {
             queryParamsSet.add(entry.getKey() + "=" + urlFormEncode(entry.getValue()));
         }
 
-        return String.format("%s?%s", url, convertSetToString(queryParamsSet, "&"));
+        final String queryString = convertSetToString(queryParamsSet, QUERY_STRING_DELIMITER);
+        final String queryStringFormat;
+        if (url.contains(QUERY_STRING_SYMBOL)) {
+            queryStringFormat = url.endsWith(QUERY_STRING_DELIMITER) ? "%s%s" : "%s" + QUERY_STRING_DELIMITER + "%s";
+        } else {
+            queryStringFormat = "%s" + QUERY_STRING_SYMBOL + "%s";
+        }
+
+        return String.format(queryStringFormat, url, queryString);
     }
 
     static String base64UrlEncodeToString(final String message) {
@@ -414,5 +428,20 @@ final class MsalUtils {
         }
 
         return applicationInfo;
+    }
+
+    static Set<String> convertArrayToSet(final String[] values) {
+        final Set<String> convertedSet = new HashSet<>();
+        if (values == null) {
+            return convertedSet;
+        }
+
+        for (int i = 0; i < values.length; i++) {
+            if (!MsalUtils.isEmpty(values[i])) {
+                convertedSet.add(values[i]);
+            }
+        }
+
+        return convertedSet;
     }
 }

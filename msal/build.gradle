@@ -10,8 +10,8 @@ android {
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 25
-        versionCode 1
-        versionName "1.0.0"
+        versionCode 0
+        versionName "0.1.0"
         project.archivesBaseName = "msal"
         project.version = android.defaultConfig.versionName
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -58,6 +58,28 @@ task jacocoTestReport(type: JacocoReport, dependsOn: 'testDebugUnitTest') {
     executionData = files(["${buildDir}/jacoco/testDebugUnitTest.exec",
                            "${buildDir}/outputs/code-coverage/connected/coverage.ec"
     ])
+}
+
+// Task to generate javadoc
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += configurations.compile
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+
+    options.memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PUBLIC
+    options.addStringOption('Xdoclint:none', '-quiet')
+
+    exclude '**/BuildConfig.Java'
+    exclude '**/R.java'
+    classpath = configurations.compile
+    destinationDir = reporting.file("$project.buildDir/outputs/jar/javadoc/")
+}
+
+// Task to generate javadoc.jar
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+    destinationDir = reporting.file("$project.buildDir/outputs/jar/")
 }
 
 dependencies {

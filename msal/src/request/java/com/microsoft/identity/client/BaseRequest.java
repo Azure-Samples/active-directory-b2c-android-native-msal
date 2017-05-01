@@ -152,8 +152,8 @@ abstract class BaseRequest {
         }
 
         // client id can only be provided as a single scope.
-        if (inputScopes.contains(mAuthRequestParameters.getClientId()) && inputScopes.size() != 1) {
-            throw new IllegalArgumentException("Client id can only be provided as single scope.");
+        if (inputScopes.contains(mAuthRequestParameters.getClientId())) {
+            throw new IllegalArgumentException("Client id can only be provided as scope.");
         }
     }
 
@@ -225,7 +225,7 @@ abstract class BaseRequest {
                     null);
         }
 
-        if (MsalUiRequiredException.INVALID_GRANT.equals(tokenResponse.getError())) {
+        if (OauthConstants.ErrorCode.INVALID_GRANT.equals(tokenResponse.getError())) {
             throw new MsalUiRequiredException(MsalUiRequiredException.INVALID_GRANT, tokenResponse.getErrorDescription(), null);
         }
 

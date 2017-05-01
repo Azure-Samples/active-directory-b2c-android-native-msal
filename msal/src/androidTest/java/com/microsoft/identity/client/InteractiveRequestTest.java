@@ -143,16 +143,25 @@ public final class InteractiveRequestTest extends AndroidTestCase {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    public void testConstructorClientIdAsSingleScope() {
+        final Set<String> scopes = new HashSet<>();
+        scopes.add(CLIENT_ID);
+
+        new InteractiveRequest(Mockito.mock(Activity.class), getAuthRequestParameters(AUTHORITY, scopes, mRedirectUri,
+                LOGIN_HINT, UiBehavior.FORCE_LOGIN, null), null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
     public void testConstructorEmptyRedirectUri() {
         new InteractiveRequest(Mockito.mock(Activity.class), getAuthRequestParameters(AUTHORITY, getScopes(), "", LOGIN_HINT,
                 UiBehavior.FORCE_LOGIN, null), null);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testAdditionalScopeContainsReservedScope() {
-        final Set<String> additionalScopes = getScopesContainsReservedScope();
+    public void testExtraScopesToConsentContainsReservedScope() {
+        final Set<String> extraScopesToConsent = getScopesContainsReservedScope();
         new InteractiveRequest(Mockito.mock(Activity.class), getAuthRequestParameters(AUTHORITY, getScopes(), "", LOGIN_HINT,
-                UiBehavior.FORCE_LOGIN, null), additionalScopes.toArray(new String[additionalScopes.size()]));
+                UiBehavior.FORCE_LOGIN, null), extraScopesToConsent.toArray(new String[extraScopesToConsent.size()]));
     }
 
     @Test
@@ -199,17 +208,22 @@ public final class InteractiveRequestTest extends AndroidTestCase {
 
     @Test
     public void testGetAuthorizationUriUiBehaviorForceLogin() throws UnsupportedEncodingException, MsalException {
-        final String[] additionalScope = {"additionalScope"};
+        final String[] extraScope = {"extraScope"};
         final InteractiveRequest interactiveRequest = new InteractiveRequest(Mockito.mock(Activity.class),
-                getAuthenticationParams(AUTHORITY, UiBehavior.FORCE_LOGIN, null), additionalScope);
+                getAuthenticationParams(AUTHORITY, UiBehavior.FORCE_LOGIN, null), extraScope);
         final String actualAuthorizationUri = interactiveRequest.appendQueryStringToAuthorizeEndpoint();
         final Uri authorityUrl = Uri.parse(actualAuthorizationUri);
         Map<String, String> queryStrings = MsalUtils.decodeUrlToMap(authorityUrl.getQuery(), "&");
 
         final Set<String> expectedScopes = getExpectedScopes();
-        expectedScopes.add("additionalScope");
-        assertTrue(MsalUtils.convertSetToString(expectedScopes, " ").equals(
-                queryStrings.get(OauthConstants.Oauth2Parameters.SCOPE)));
+        expectedScopes.add("extraScope");
+        final String[] queryStringScopes = queryStrings.get(OauthConstants.Oauth2Parameters.SCOPE).split(" ");
+        for (final String param : queryStringScopes) {
+            // iterate and remove from set then verify that it is empty
+            assertTrue(expectedScopes.contains(param));
+            expectedScopes.remove(param);
+        }
+        assertTrue(expectedScopes.isEmpty());
         assertTrue(OauthConstants.PromptValue.LOGIN.equals(queryStrings.get(OauthConstants.Oauth2Parameters.PROMPT)));
         verifyCommonQueryString(queryStrings);
     }
@@ -804,8 +818,12 @@ public final class InteractiveRequestTest extends AndroidTestCase {
         }.performTest();
     }
 
-    private AuthenticationRequestParameters getAuthenticationParams(final String authority, final UiBehavior uiBehavior, final User user) {
-        return AuthenticationRequestParameters.create(Authority.createAuthority(authority, true), new TokenCache(mAppContext), getScopes(),
+    private AuthenticationRequestParameters getAuthenticationParams(final String authorityString, final UiBehavior uiBehavior, final User user) {
+        final Authority authority = Authority.createAuthority(authorityString, true);
+        authority.mAuthorizationEndpoint = SilentRequestTest.AUTHORIZE_ENDPOINT;
+        authority.mTokenEndpoint = SilentRequestTest.TOKEN_ENDPOINT;
+
+        return AuthenticationRequestParameters.create(authority, new TokenCache(mAppContext), getScopes(),
                 CLIENT_ID, mRedirectUri, LOGIN_HINT, "", uiBehavior, user, new RequestContext(CORRELATION_ID, "", Telemetry.generateNewRequestId()));
     }
 
@@ -819,8 +837,11 @@ public final class InteractiveRequestTest extends AndroidTestCase {
                 CLIENT_ID, redirectUri, loginHint, "", uiBehavior, user, new RequestContext(CORRELATION_ID, "", Telemetry.generateNewRequestId()));
     }
 
-    private AuthenticationRequestParameters getAuthRequestParameters(final String authority, final UiBehavior uiBehavior, final String extraQp) {
-        return AuthenticationRequestParameters.create(Authority.createAuthority(authority, true), new TokenCache(mAppContext), getScopes(),
+    private AuthenticationRequestParameters getAuthRequestParameters(final String authorityString, final UiBehavior uiBehavior, final String extraQp) {
+        final Authority authority = Authority.createAuthority(authorityString, true);
+        authority.mAuthorizationEndpoint = SilentRequestTest.AUTHORIZE_ENDPOINT;
+        authority.mTokenEndpoint = SilentRequestTest.TOKEN_ENDPOINT;
+        return AuthenticationRequestParameters.create(authority, new TokenCache(mAppContext), getScopes(),
                 CLIENT_ID, mRedirectUri, LOGIN_HINT, extraQp, uiBehavior, null, new RequestContext(CORRELATION_ID, "", Telemetry.generateNewRequestId()));
     }
 

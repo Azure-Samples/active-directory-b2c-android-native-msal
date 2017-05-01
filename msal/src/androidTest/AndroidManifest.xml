@@ -4,8 +4,8 @@
     android:versionCode="1"
     android:versionName="1.0" >
 
-    <uses-sdk android:minSdkVersion="16"
-         android:targetSdkVersion="23"  />
+    <uses-sdk android:minSdkVersion="21"
+         android:targetSdkVersion="25"  />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -28,8 +28,8 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="msauth-client-id"
-                      android:host="com.microsoft.identity.msal.test" />
+                <data android:scheme="msalclient-id"
+                      android:host="auth" />
             </intent-filter>
         </activity>
 

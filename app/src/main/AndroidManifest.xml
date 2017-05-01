@@ -21,7 +21,7 @@
         </activity>
         <activity
             android:name=".AuthenticatedActivity"
-            android:label="@string/title_activity_post_sign_in"
+            android:label="@string/title_activity_authenticated"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
 
         <!--Intent filter to capture System Browser calling back to our app after Sign In-->
@@ -33,8 +33,8 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <!--Add in your scheme/host from registered redirect URI-->
-                <data android:scheme="msauth-074d69f8-eed5-46ed-b577-13a834d0a716"
-                    android:host="com.danieldobalian.msalandroidapp" />
+                <data android:scheme="msal90c0fe63-bcf2-44d5-8fb7-b8bbc0b29dc6"
+                    android:host="auth" />
             </intent-filter>
         </activity>
 

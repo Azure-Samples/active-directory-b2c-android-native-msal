@@ -30,8 +30,8 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import com.microsoft.identity.msal.BuildConfig;
+
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -46,10 +46,30 @@ import static com.microsoft.identity.client.EventConstants.ApiId.API_ID_ACQUIRE_
 import static com.microsoft.identity.client.EventConstants.ApiId.API_ID_ACQUIRE_WITH_USER_BEHAVIOR_PARAMETERS_AND_AUTHORITY;
 
 /**
- * Entry point for developer to create the public native application, and make API call to get token.
- * MSAL {@link PublicClientApplication} provides three constructors, developer can choose to set client id in manifest
- * metadata or using constructor. If developer chooses to not use the default authority, it could also be set via constructor
- * or manifest metadata.
+ * <p>
+ * This is the entry point for developer to create the public native applications and make API call to acquire tokens. MSAL {@link PublicClientApplication} provides three constructors allowing the client id to be set either via AndroidManifest.xml metadata or using constructor parameters.
+ * Similarly, if developer chooses not to use the default authority (https://login.microsoftonline.com), an alternate can also be configured using the manifest or constructor parameters.
+ * </p>
+ * <p>
+ * Redirect is auto-generated in the library in the format of msal<client-id>://auth, it cannot be overridden.
+ * </p>
+ * <p>
+ * Developer <b>MUST</b> have {@link BrowserTabActivity} declared in their manifest, which <b>MUST</b> have the correct intent-filter configured. If the wrong scheme and host is provided, the sdk will fail the {@link PublicClientApplication} creation.
+ *
+ * Expected format will be:
+ * <pre>
+ * &lt;activity
+ *     android:name="com.microsoft.identity.client.BrowserTabActivity"&gt;
+ *     &lt;intent-filter&gt;
+ *         &lt;action android:name="android.intent.action.VIEW" /&gt;
+ *         &lt;category android:name="android.intent.category.DEFAULT" /&gt;
+ *         &lt;category android:name="android.intent.category.BROWSABLE" /&gt;
+ *         &lt;data android:scheme="msal&lt;AppClientId&gt;"
+ *              android:host="auth" /&gt;
+ *     &lt;/intent-filter&gt;
+ * &lt;/activity&gt;
+ * </pre>
+ * </p>
  */
 public final class PublicClientApplication {
     private static final String TAG = PublicClientApplication.class.getSimpleName();
@@ -75,16 +95,20 @@ public final class PublicClientApplication {
      * is not set, default authority(https://login.microsoftonline.com/common) will be used.
      * <p>
      *      Client id <b>MUST</b> be set in the manifest as the meta data({@link IllegalArgumentException} will be thrown
-     *      if client id is not provided), name for client id in the metadata is: "com.microsoft.identity.client.ClientId"
+     *      if client id is not provided), name for client id in the metadata is: "com.microsoft.identity.client.ClientId".
+     *
      *      Redirect uri <b>MUST</b> be set in the manifest as the meta data({@link IllegalArgumentException} will be thrown
-     *      if client id is not provided), name for redirect uri in metadata is: "com.microsoft.identity.client.RedirectUri"
-     *      Authority can be set in the meta data, if not provided, the sdk will use the default authority.
+     *      if client id is not provided), name for redirect uri in metadata is: "com.microsoft.identity.client.RedirectUri".
+     *
+     *      Authority can be set in the meta data, if not provided, the sdk will use the default authority (https://login.microsoftonline.com/common).
      * </p>
      *
      * @param context Application's {@link Context}. The sdk requires the application context to be passed in
-     *                {@link PublicClientApplication}. Cannot be null. @note: The {@link Context} should be the application
-     *                context instead of an running activity's context, which could potentially make the sdk hold a strong reference on
-     *                the activity, thus preventing correct garbage collection and causing bugs.
+     *                {@link PublicClientApplication}. Cannot be null.
+     *                <p>
+     *                Note: The {@link Context} should be the application context instead of the running activity's context, which could potentially make the sdk hold a
+     *                strong reference to the activity, thus preventing correct garbage collection and causing bugs.
+     *                </p>
      */
     public PublicClientApplication(@NonNull final Context context) {
         if (context == null) {
@@ -104,9 +128,11 @@ public final class PublicClientApplication {
      * providing client id through metadata. If this constructor is called, default authority(https://login.microsoftonline.com/common)
      * will be used.
      * @param context Application's {@link Context}. The sdk requires the application context to be passed in
-     *                {@link PublicClientApplication}. Cannot be null. @note: The {@link Context} should be the application
-     *                context instead of an running activity's context, which could potentially make the sdk hold a strong reference on
-     *                the activity, thus preventing correct garbage collection and causing bugs.
+     *                {@link PublicClientApplication}. Cannot be null.
+     *                <p>
+     *                Note: The {@link Context} should be the application context instead of the running activity's context, which could potentially make the sdk hold a
+     *                strong reference to the activity, thus preventing correct garbage collection and causing bugs.
+     *                </p>
      * @param clientId The application client id.
      */
     public PublicClientApplication(@NonNull final Context context, @NonNull final String clientId) {
@@ -131,9 +157,11 @@ public final class PublicClientApplication {
      * providing them through metadata.
      *
      * @param context Application's {@link Context}. The sdk requires the application context to be passed in
-     *                {@link PublicClientApplication}. Cannot be null. @note: The {@link Context} should be the application
-     *                context instead of an running activity's context, which could potentially make the sdk hold a strong reference on
-     *                the activity, thus preventing correct garbage collection and causing bugs.
+     *                {@link PublicClientApplication}. Cannot be null.
+     *                <p>
+     *                Note: The {@link Context} should be the application context instead of an running activity's context, which could potentially make the sdk hold a
+     *                strong reference to the activity, thus preventing correct garbage collection and causing bugs.
+     *                </p>
      * @param clientId The application client id.
      * @param authority The default authority to be used for the authority.
      */
@@ -166,7 +194,7 @@ public final class PublicClientApplication {
      * @return The current version for the sdk.
      */
     public static String getSdkVersion() {
-        return "1.0.0";
+        return BuildConfig.VERSION_NAME;
     }
 
     /**
@@ -361,7 +389,7 @@ public final class PublicClientApplication {
      *                  which will have the UPN pre-populated.
      * @param uiBehavior The {@link UiBehavior} for prompting behavior. By default, the sdk use {@link UiBehavior#SELECT_ACCOUNT}.
      * @param extraQueryParams Optional. The extra query parameter sent to authorize endpoint.
-     * @param additionalScope Optional. The additional scope to consent for.
+     * @param extraScopesToConsent Optional. The extra scopes to consent for.
      * @param authority Should be set if developer wants to get token for a different authority url.
      * @param callback The Non-null {@link AuthenticationCallback} to receive the result back.
      *                 1) If user cancels the flow by pressing the device back button, the result will be sent
@@ -372,13 +400,13 @@ public final class PublicClientApplication {
      *                 {@link AuthenticationCallback#onError(MsalException)}.
      */
     public void acquireToken(@NonNull final Activity activity, @NonNull final String[] scopes, final String loginHint, final UiBehavior uiBehavior,
-                             final String extraQueryParams, final String[] additionalScope, final String authority,
+                             final String extraQueryParams, final String[] extraScopesToConsent, final String authority,
                              @NonNull final AuthenticationCallback callback) {
         final String telemetryRequestId = Telemetry.generateNewRequestId();
         ApiEvent.Builder apiEventBuilder = createApiEventBuilder(telemetryRequestId, API_ID_ACQUIRE_WITH_HINT_BEHAVIOR_PARAMETERS_AND_AUTHORITY);
 
         acquireTokenInteractive(activity, scopes, loginHint, uiBehavior == null ? UiBehavior.SELECT_ACCOUNT : uiBehavior,
-                extraQueryParams, additionalScope, authority, null, wrapCallbackForTelemetryIntercept(apiEventBuilder, callback), telemetryRequestId, apiEventBuilder);
+                extraQueryParams, extraScopesToConsent, authority, null, wrapCallbackForTelemetryIntercept(apiEventBuilder, callback), telemetryRequestId, apiEventBuilder);
     }
 
     /**
@@ -393,7 +421,7 @@ public final class PublicClientApplication {
      *             will be returned.
      * @param uiBehavior The {@link UiBehavior} for prompting behavior. By default, the sdk use {@link UiBehavior#SELECT_ACCOUNT}.
      * @param extraQueryParams Optional. The extra query parameter sent to authorize endpoint.
-     * @param additionalScope Optional. The additional scope to consent for.
+     * @param extraScopesToConsent Optional. The extra scopes to consent for.
      * @param authority Should be set if developer wants to get token for a different authority url.
      * @param callback The Non-null {@link AuthenticationCallback} to receive the result back.
      *                 1) If user cancels the flow by pressing the device back button, the result will be sent
@@ -404,12 +432,12 @@ public final class PublicClientApplication {
      *                 {@link AuthenticationCallback#onError(MsalException)}.
      */
     public void acquireToken(@NonNull final Activity activity, @NonNull final String[] scopes, final User user, final UiBehavior uiBehavior,
-                             final String extraQueryParams, final String[] additionalScope, final String authority,
+                             final String extraQueryParams, final String[] extraScopesToConsent, final String authority,
                              @NonNull final AuthenticationCallback callback) {
         final String telemetryRequestId = Telemetry.generateNewRequestId();
         ApiEvent.Builder apiEventBuilder = createApiEventBuilder(telemetryRequestId, API_ID_ACQUIRE_WITH_USER_BEHAVIOR_PARAMETERS_AND_AUTHORITY);
 
-        acquireTokenInteractive(activity, scopes, "", uiBehavior == null ? UiBehavior.SELECT_ACCOUNT : uiBehavior, extraQueryParams, additionalScope,
+        acquireTokenInteractive(activity, scopes, "", uiBehavior == null ? UiBehavior.SELECT_ACCOUNT : uiBehavior, extraQueryParams, extraScopesToConsent,
                 authority, user, wrapCallbackForTelemetryIntercept(apiEventBuilder, callback), telemetryRequestId, apiEventBuilder);
     }
 
@@ -532,12 +560,12 @@ public final class PublicClientApplication {
      * The sdk will comupte the redirect when the PublicClientApplication is initialized.
      */
     private String createRedirectUri(final String clientId) {
-        return "msauth-" + clientId + "://" + mAppContext.getPackageName();
+        return "msal" + clientId + "://auth";
     }
 
 
     private void acquireTokenInteractive(final Activity activity, final String[] scopes, final String loginHint, final UiBehavior uiBehavior,
-                                         final String extraQueryParams, final String[] additionalScope,
+                                         final String extraQueryParams, final String[] extraScopesToConsent,
                                          final String authority, final User user, final AuthenticationCallback callback,
                                          final String telemetryRequestId, final ApiEvent.Builder apiEventBuilder) {
         if (callback == null) {
@@ -555,7 +583,7 @@ public final class PublicClientApplication {
                 .setCorrelationId(requestParameters.getRequestContext().getCorrelationId());
 
         Logger.info(TAG, requestParameters.getRequestContext(), "Preparing a new interactive request");
-        final BaseRequest request = new InteractiveRequest(activity, requestParameters, additionalScope);
+        final BaseRequest request = new InteractiveRequest(activity, requestParameters, extraScopesToConsent);
         request.getToken(callback);
     }
 
@@ -572,7 +600,7 @@ public final class PublicClientApplication {
                 : Authority.createAuthority(authority, mValidateAuthority);
         // set correlation if not developer didn't set it.
         final RequestContext requestContext = new RequestContext(UUID.randomUUID(), mComponent, telemetryRequestId);
-        final Set<String> scopesAsSet = new HashSet<>(Arrays.asList(scopes));
+        final Set<String> scopesAsSet = MsalUtils.convertArrayToSet(scopes);
         final AuthenticationRequestParameters requestParameters = AuthenticationRequestParameters.create(authorityForRequest, mTokenCache,
                 scopesAsSet, mClientId, requestContext);
 
@@ -599,7 +627,7 @@ public final class PublicClientApplication {
                 : Authority.createAuthority(authority, mValidateAuthority);
         // set correlation if not developer didn't set it.
         final UUID correlationId = UUID.randomUUID();
-        final Set<String> scopesAsSet = new HashSet<>(Arrays.asList(scopes));
+        final Set<String> scopesAsSet = MsalUtils.convertArrayToSet(scopes);
 
         return AuthenticationRequestParameters.create(authorityForRequest, mTokenCache, scopesAsSet, mClientId,
                 mRedirectUri, loginHint, extraQueryParam, uiBehavior, user, new RequestContext(correlationId, mComponent, telemetryRequestId));

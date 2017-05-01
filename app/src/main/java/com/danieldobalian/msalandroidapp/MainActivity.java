@@ -17,6 +17,7 @@ public class MainActivity extends AppCompatActivity {
     /* Azure AD variables */
     private PublicClientApplication sampleApp;
     private AuthenticationResult authResult;
+    private String authority;
     private User currentUser;
     private String[] scopes;
 
@@ -58,7 +59,8 @@ public class MainActivity extends AppCompatActivity {
         if (sampleApp == null) {
             sampleApp = new PublicClientApplication(
                     this.getApplicationContext(),
-                    Constants.CLIENT_ID);
+                    Constants.CLIENT_ID,
+                    String.format(Constants.AUTHORITY, Constants.TENANT, Constants.SISU_POLICY));
             state.setPublicClient(sampleApp);
         }
 
