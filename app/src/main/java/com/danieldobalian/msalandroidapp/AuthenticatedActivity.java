@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.lang.String;
 
-public class PostSignInActivity extends AppCompatActivity {
+public class AuthenticatedActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 

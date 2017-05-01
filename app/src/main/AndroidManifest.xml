@@ -20,7 +20,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".PostSignInActivity"
+            android:name=".AuthenticatedActivity"
             android:label="@string/title_activity_post_sign_in"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
 

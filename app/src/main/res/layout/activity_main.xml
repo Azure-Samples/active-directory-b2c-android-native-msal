@@ -52,7 +52,7 @@
         android:orientation="vertical">
 
             <Button
-                android:id="@+id/signIn"
+                android:id="@+id/callApi"
                 android:text="@string/signInText"
                 android:textColor="@color/white"
                 android:background="@color/microsoftBlue"

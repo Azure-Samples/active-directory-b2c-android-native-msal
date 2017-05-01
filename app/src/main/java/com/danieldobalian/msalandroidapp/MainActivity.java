@@ -7,23 +7,14 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-
-import com.android.volley.toolbox.Volley;
 import com.microsoft.identity.client.*;
 
-import org.json.JSONObject;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    Button signInButton;
+    Button callApiButton;
     Button learnMoreButton;
 
     /* Azure AD variables */
@@ -44,14 +35,14 @@ public class MainActivity extends AppCompatActivity {
 
         state = (AppSubClass) getApplicationContext();
 
-        signInButton = (Button) findViewById(R.id.signIn);
+        callApiButton = (Button) findViewById(R.id.callApi);
         learnMoreButton = (Button) findViewById(R.id.learnMore);
 
         scopes = Constants.SCOPES.split("\\s+");
 
-        signInButton.setOnClickListener(new View.OnClickListener() {
+        callApiButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                signIn(scopes);
+                onCallApiClicked(scopes);
             }
         });
 
@@ -83,15 +74,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /* Use MSAL to acquireToken for the end-user
-    *  Call Graph API
-    *  Pass UserInfo response data to PostSignInActivity
+    *  Call API
+    *  Pass UserInfo response data to AuthenticatedActivity
     */
-    private void signIn(String[] scopes) {
+    private void onCallApiClicked(String[] scopes) {
 
         /* Attempt to get a user and acquireTokenSilently
          * If this fails we will do an interactive request
          */
-        Log.d(TAG, "Sign In Clicked");
+        Log.d(TAG, "Call API Clicked");
 
         List<User> users = null;
         try {
@@ -123,8 +114,8 @@ public class MainActivity extends AppCompatActivity {
         sampleApp.acquireToken(this, scopes, getAuthInteractiveCallback());
     }
 
-    /* Starts post sign in intent */
-    private void startPostSignIn() {startActivity(new Intent(this, PostSignInActivity.class));}
+    /* Starts authenticated intent */
+    private void startAuthenticated() {startActivity(new Intent(this, AuthenticatedActivity.class));}
 
     /* Callback used in for silent acquireToken calls.
      * Looks if tokens are in the cache (refreshes if necessary and if we don't forceRefresh)
@@ -139,8 +130,8 @@ public class MainActivity extends AppCompatActivity {
                 authResult = authenticationResult;
                 state.setAuthResult(authResult);
 
-                /* Start post sign in activity */
-                startPostSignIn();
+                /* Start authenticated activity */
+                startAuthenticated();
             }
 
             @Override
@@ -183,8 +174,8 @@ public class MainActivity extends AppCompatActivity {
                 authResult = authenticationResult;
                 state.setAuthResult(authResult);
 
-                /* Start post sign in activity */
-                startPostSignIn();
+                /* Start authenticated activity */
+                startAuthenticated();
             }
 
             @Override
