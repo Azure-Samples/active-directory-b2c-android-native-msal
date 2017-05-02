@@ -1,11 +1,12 @@
 *.iml
 .gradle
-/local.properties
-/.idea/workspace.xml
-/.idea/libraries
+android-client/local.properties
+android-client/.idea/workspace.xml
+android-client/.idea/libraries
 .DS_Store
 /build
 /captures
 .externalNativeBuild
 android-client/msal/build
 android-client/build
+helloAPI/node_modules
