@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">MSALAndroidApp</string>
+    <string name="welcome">Welcome to Wingtip Toys</string>
+    <string name="aadPlug">Identity by Azure AD B2C</string>
+    <string name="callAPIText">Call API</string>
+    <string name="learnText">Learn more</string>
+    <string name="title_activity_authenticated">AuthenticatedActivity</string>
+    <string name="title_activity_learn_more">LearnMoreActivity</string>
+    <string name="tokenPresent">In Cache</string>
+    <string name="noToken">Null</string>
+    <string name="IT">ID Token:</string>
+    <string name="AT">Access Token:</string>
+    <string name="RT">Refresh Token:</string>
+    <string name="api">Calling API...</string>
+    <string name="failedRefresh">Failed to Refresh Token.</string>
+    <string name="editSuccess">Successfully Updated Profile</string>
+    <string name="editFailure">Failed to Updated Profile</string>
+
+    <string name="moreInfo">Tested Versions\n\nMSAL: 0.1.0\nAndroid: 21-25\nAndroid Studio: 2.2.3
+        \n\nThis app is intended to demonstrate best practices when using MSAL
+        with Azure AD B2C.  If you encounter any problems with the sample, SDK, or Service please
+        create a new github issue or post on StackOverflow with tag `azure-active-directory`.\n\n
+        This sample is under the MIT License, please see LICENSE for more info.</string>
+</resources>
