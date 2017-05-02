@@ -4,4 +4,4 @@ platforms: Android
 author: danieldobalian
 ---
 
-# Sign in Azure AD + MSA Users using MSAL Android
+# Get Access Tokens for Azure AD B2C using MSAL Android
