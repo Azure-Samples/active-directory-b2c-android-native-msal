@@ -1,5 +1,6 @@
 package com.danieldobalian.msalandroidapp;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -84,15 +85,22 @@ public class AuthenticatedActivity extends AppCompatActivity {
     //
     // Core Identity methods used by MSAL
     // ==================================
+    // onActivityResult() - Catches the redirect from the system browser
     // callAPI() - Calls our api with new access token
     // editProfile() - Calls b2c edit policy with this temporary authority
     // clearCache() - Clears token cache of this app
     //
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        sampleApp.handleInteractiveRequestRedirect(requestCode, resultCode, data);
+    }
+
     /* Use Volley to request the /me endpoint from API
-*  Sets the UI to what we get back
-*/
+     *  Sets the UI to what we get back
+     */
     private void callAPI() {
+
         Log.d(TAG, "Starting volley request to API");
 
         RequestQueue queue = Volley.newRequestQueue(this);
@@ -143,8 +151,8 @@ public class AuthenticatedActivity extends AppCompatActivity {
     }
 
     /* Use Volley to request the /me endpoint from API
-    *  Sets the UI to what we get back
-    */
+     *  Sets the UI to what we get back
+     */
     private void editProfile() {
         Log.d(TAG, "Starting volley request to API");
         try {
@@ -323,6 +331,9 @@ public class AuthenticatedActivity extends AppCompatActivity {
             public void onSuccess(AuthenticationResult authenticationResult) {
                 /* Successfully got a token */
                 updateRefreshTokenUI(true);
+
+                /* If the token is refreshed we should refresh our data */
+                callAPI();
             }
 
             @Override
@@ -361,16 +372,19 @@ public class AuthenticatedActivity extends AppCompatActivity {
             @Override
             public void onSuccess(AuthenticationResult authenticationResult) {
                 /* Successfully got a token */
-                Toast.makeText(getBaseContext(), getString(R.string.editSuccess), Toast.LENGTH_SHORT)
-                        .show();
+//                Toast.makeText(getBaseContext(), getString(R.string.editSuccess), Toast.LENGTH_SHORT)
+//                        .show();
+
+                /* Use this method to refresh our token with new claims */
+                hasRefreshToken();
             }
 
             @Override
             public void onError(MsalException exception) {
                 /* Failed to acquireToken */
                 Log.d(TAG, "Authentication failed: " + exception.toString());
-                Toast.makeText(getBaseContext(), getString(R.string.editFailure), Toast.LENGTH_SHORT)
-                        .show();
+//                Toast.makeText(getBaseContext(), getString(R.string.editFailure), Toast.LENGTH_SHORT)
+//                        .show();
                 if (exception instanceof MsalClientException) {
                     /* Exception inside MSAL, more info inside MsalError.java */
                     assert true;

@@ -61,6 +61,13 @@ public class MainActivity extends AppCompatActivity {
                     Constants.CLIENT_ID,
                     String.format(Constants.AUTHORITY, Constants.TENANT, Constants.SISU_POLICY));
             state.setPublicClient(sampleApp);
+
+            Logger.getInstance().setExternalLogger(new ILoggerCallback() {
+                @Override
+                public void log(String tag, Logger.LogLevel logLevel, String message, boolean containsPII) {
+                    Log.d(tag, "MSAL_LOG: " + message);
+                }
+            });
         }
     }
 
