@@ -23,8 +23,10 @@ import com.microsoft.identity.client.MsalException;
 import com.microsoft.identity.client.MsalServiceException;
 import com.microsoft.identity.client.MsalUiRequiredException;
 import com.microsoft.identity.client.PublicClientApplication;
+import com.microsoft.identity.client.UiBehavior;
 import com.microsoft.identity.client.User;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.HashMap;
@@ -50,15 +52,12 @@ public class AuthenticatedActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_authenticated);
 
-        apiButton = (Button) findViewById(R.id.api);
+        apiButton = (Button) findViewById(R.id.edit);
         clearCacheButton = (Button) findViewById(R.id.clearCache);
 
         apiButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                Toast.makeText(getBaseContext(), getString(R.string.api), Toast.LENGTH_SHORT)
-                        .show();
-
-                callAPI();
+                editProfile();
             }
         });
 
@@ -74,11 +73,6 @@ public class AuthenticatedActivity extends AppCompatActivity {
         authResult = appState.getAuthResult();
         scopes = Constants.SCOPES.split("\\s+");
 
-        /* Set Welcome Text */
-        Log.d(TAG, "Signed in: " + authResult.getUser().getName());
-        ((TextView) findViewById(R.id.welcome)).setText("Welcome, "
-                + authResult.getUser().getName());
-
         /* Write the token status (whether or not we received each token) */
         this.updateTokenUI();
 
@@ -87,15 +81,17 @@ public class AuthenticatedActivity extends AppCompatActivity {
 
     }
 
+    //
     // Core Identity methods used by MSAL
     // ==================================
-    // callAPI() - Calls your api with access token
+    // callAPI() - Calls our api with new access token
+    // editProfile() - Calls b2c edit policy with this temporary authority
     // clearCache() - Clears token cache of this app
     //
 
     /* Use Volley to request the /me endpoint from API
-    *  Sets the UI to what we get back
-    */
+*  Sets the UI to what we get back
+*/
     private void callAPI() {
         Log.d(TAG, "Starting volley request to API");
 
@@ -112,9 +108,15 @@ public class AuthenticatedActivity extends AppCompatActivity {
             @Override
             public void onResponse(JSONObject response) {
                 /* Successfully called API */
-                Log.d(TAG, "Response: " + response.toString());
-
-                updateAPIUI(response);
+                Log.d(TAG, "Response: " + response);
+                try {
+                    ((TextView) findViewById(R.id.welcome)).setText("Welcome, "
+                            + response.getString("name"));
+                    Toast.makeText(getBaseContext(), "Response: " + response.get("name"), Toast.LENGTH_SHORT)
+                            .show();
+                } catch (JSONException e) {
+                    Log.d(TAG, "JSONEXception Error: " + e.toString());
+                }
             }
         }, new Response.ErrorListener() {
             @Override
@@ -125,6 +127,7 @@ public class AuthenticatedActivity extends AppCompatActivity {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> headers = new HashMap<>();
+                Log.d(TAG, "Token: " + authResult.getAccessToken().toString());
                 headers.put("Authorization", "Bearer " + authResult.getAccessToken());
                 return headers;
             }
@@ -133,10 +136,51 @@ public class AuthenticatedActivity extends AppCompatActivity {
         Log.d(TAG, "Adding HTTP GET to Queue, Request: " + request.toString());
 
         request.setRetryPolicy(new DefaultRetryPolicy(
-                6000,
+                3000,
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         queue.add(request);
+    }
+
+    /* Use Volley to request the /me endpoint from API
+    *  Sets the UI to what we get back
+    */
+    private void editProfile() {
+        Log.d(TAG, "Starting volley request to API");
+        try {
+            List<User> users = sampleApp.getUsers();
+            String authority = String.format(Constants.AUTHORITY,
+                    Constants.TENANT,
+                    Constants.EDIT_PROFILE_POLICY);
+            if (users.size() == 1) {
+                /* We have 1 user */
+                sampleApp.acquireToken(
+                        this,
+                        Constants.SCOPES.split("\\s+"),
+                        users.get(0),
+                        UiBehavior.SELECT_ACCOUNT,
+                        null,
+                        null,
+                        authority,
+                        getEditPolicyCallback());
+            } else
+            {
+                /* Multiple or no users*/
+                sampleApp.acquireToken(
+                        this,
+                        Constants.SCOPES.split("\\s+"),
+                        (User) null,
+                        UiBehavior.SELECT_ACCOUNT,
+                        null,
+                        null,
+                        authority,
+                        getEditPolicyCallback());
+            }
+        } catch(MsalClientException e) {
+            /* No User */
+            Log.d(TAG, "MSAL Exception Generated while getting users: " + e.toString());
+        }
+
     }
 
     /* Clears a user's tokens from the cache.
@@ -187,18 +231,11 @@ public class AuthenticatedActivity extends AppCompatActivity {
     // UI & Helper methods
     // ==================================
     // Everything below is some kind of helper to update app UI or do non-essential identity tasks
-    // updateAPIUI() - Updates UI when we get a response from our API
     // UpdateTokenUI() - Updates UI with token in cache status
     // hasRefreshToken() - Checks if we have a refresh token in our cache
     // UpdateRefreshTokenUI() - Updates UI with RT in cache status
     // getAuthSilentCallback() -
     //
-
-    /* Calls the API and dumps response into UI */
-    private void updateAPIUI(JSONObject response) {
-        TextView apiText = (TextView) findViewById(R.id.apiData);
-        apiText.setText(response.toString());
-    }
 
     /* Write the token status (whether or not we received each token) */
     private void updateTokenUI() {
@@ -312,6 +349,48 @@ public class AuthenticatedActivity extends AppCompatActivity {
                 /* User canceled the authentication */
                 Log.d(TAG, "User cancelled login.");
                 updateRefreshTokenUI(true);
+            }
+        };
+    }
+
+    /* Callback used in for silent acquireToken calls.
+     * Used in here solely to test whether or not we have a refresh token in the cache
+     */
+    private AuthenticationCallback getEditPolicyCallback() {
+        return new AuthenticationCallback() {
+            @Override
+            public void onSuccess(AuthenticationResult authenticationResult) {
+                /* Successfully got a token */
+                Toast.makeText(getBaseContext(), getString(R.string.editSuccess), Toast.LENGTH_SHORT)
+                        .show();
+            }
+
+            @Override
+            public void onError(MsalException exception) {
+                /* Failed to acquireToken */
+                Log.d(TAG, "Authentication failed: " + exception.toString());
+                Toast.makeText(getBaseContext(), getString(R.string.editFailure), Toast.LENGTH_SHORT)
+                        .show();
+                if (exception instanceof MsalClientException) {
+                    /* Exception inside MSAL, more info inside MsalError.java */
+                    assert true;
+
+                } else if (exception instanceof MsalServiceException) {
+                    /* Exception when communicating with the STS, likely config issue */
+                    assert true;
+
+                } else if (exception instanceof MsalUiRequiredException) {
+                    /* Tokens expired or no session, retry with interactive */
+                    assert true;
+                }
+            }
+
+            @Override
+            public void onCancel() {
+                /* User canceled the authentication */
+                Log.d(TAG, "User cancelled login.");
+                Toast.makeText(getBaseContext(), getString(R.string.editFailure), Toast.LENGTH_SHORT)
+                        .show();
             }
         };
     }

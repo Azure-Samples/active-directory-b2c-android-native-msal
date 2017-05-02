@@ -17,7 +17,6 @@ public class MainActivity extends AppCompatActivity {
     /* Azure AD variables */
     private PublicClientApplication sampleApp;
     private AuthenticationResult authResult;
-    private String authority;
     private User currentUser;
     private String[] scopes;
 
@@ -63,7 +62,6 @@ public class MainActivity extends AppCompatActivity {
                     String.format(Constants.AUTHORITY, Constants.TENANT, Constants.SISU_POLICY));
             state.setPublicClient(sampleApp);
         }
-
     }
 
     //
@@ -135,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
         return new AuthenticationCallback() {
             @Override
             public void onSuccess(AuthenticationResult authenticationResult) {
-                /* Successfully got a token, call graph now */
+                /* Successfully got a token, call api now */
                 Log.d(TAG, "Successfully authenticated");
                 authResult = authenticationResult;
                 state.setAuthResult(authResult);
@@ -178,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
         return new AuthenticationCallback() {
             @Override
             public void onSuccess(AuthenticationResult authenticationResult) {
-                /* Successfully got a token, call graph now */
+                /* Successfully got a token, call api now */
                 Log.d(TAG, "Successfully authenticated");
                 Log.d(TAG, "ID Token: " + authenticationResult.getIdToken());
                 authResult = authenticationResult;

@@ -53,7 +53,7 @@
 
             <Button
                 android:id="@+id/callApi"
-                android:text="@string/signInText"
+                android:text="@string/callAPIText"
                 android:textColor="@color/white"
                 android:background="@color/microsoftBlue"
                 android:layout_width="match_parent"
