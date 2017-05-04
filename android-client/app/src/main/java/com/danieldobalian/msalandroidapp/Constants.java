@@ -10,14 +10,9 @@ public class Constants {
     final static String AUTHORITY = "https://login.microsoftonline.com/tfp/%s/%s";
     final static String TENANT = "fabrikamb2c.onmicrosoft.com";
     final static String CLIENT_ID = "90c0fe63-bcf2-44d5-8fb7-b8bbc0b29dc6";
-
-    final static String REDIRECT_URI =
-            "msal90c0fe63-bcf2-44d5-8fb7-b8bbc0b29dc6://auth";
     final static String SCOPES = "https://fabrikamb2c.onmicrosoft.com/demoapi/demo.read";
-    final static String API_URL = "http://10.0.2.2:5000/hello";
+    final static String API_URL = "https://fabrikamb2chello.azurewebsites.net/hello";
 
     final static String SISU_POLICY = "B2C_1_SUSI";
     final static String EDIT_PROFILE_POLICY = "B2C_1_edit_profile";
-
-
 }

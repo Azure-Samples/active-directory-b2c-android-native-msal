@@ -141,12 +141,6 @@ public class AuthenticatedActivity extends AppCompatActivity {
             }
         };
 
-        Log.d(TAG, "Adding HTTP GET to Queue, Request: " + request.toString());
-
-        request.setRetryPolicy(new DefaultRetryPolicy(
-                3000,
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         queue.add(request);
     }
 
@@ -286,7 +280,11 @@ public class AuthenticatedActivity extends AppCompatActivity {
             if (users != null && users.size() == 1) {
             /* We have 1 user */
                 boolean forceRefresh = true;
-                sampleApp.acquireTokenSilentAsync(scopes, users.get(0), null, forceRefresh,
+                sampleApp.acquireTokenSilentAsync(
+                        scopes,
+                        users.get(0),
+                        String.format(Constants.AUTHORITY, Constants.TENANT, Constants.SISU_POLICY),
+                        forceRefresh,
                         getAuthSilentCallback());
             } else {
                 /* We have multiple users or none*/
@@ -318,7 +316,7 @@ public class AuthenticatedActivity extends AppCompatActivity {
         if (status) {
             rt.setText(rt.getText() + " " + getString(R.string.tokenPresent));
         } else {
-            rt.setText(rt.getText() + " " + getString(R.string.noToken));
+            rt.setText(rt.getText() + " " + getString(R.string.noToken) + " or Invalid");
         }
     }
 
@@ -376,13 +374,14 @@ public class AuthenticatedActivity extends AppCompatActivity {
 //                        .show();
 
                 /* Use this method to refresh our token with new claims */
+                Log.d(TAG, "Edit Profile: " + authenticationResult.getAccessToken());
                 hasRefreshToken();
             }
 
             @Override
             public void onError(MsalException exception) {
                 /* Failed to acquireToken */
-                Log.d(TAG, "Authentication failed: " + exception.toString());
+                Log.d(TAG, "Edit Profile failed: " + exception.toString());
 //                Toast.makeText(getBaseContext(), getString(R.string.editFailure), Toast.LENGTH_SHORT)
 //                        .show();
                 if (exception instanceof MsalClientException) {
@@ -402,7 +401,7 @@ public class AuthenticatedActivity extends AppCompatActivity {
             @Override
             public void onCancel() {
                 /* User canceled the authentication */
-                Log.d(TAG, "User cancelled login.");
+                Log.d(TAG, "User cancelled Edit Profile.");
                 Toast.makeText(getBaseContext(), getString(R.string.editFailure), Toast.LENGTH_SHORT)
                         .show();
             }

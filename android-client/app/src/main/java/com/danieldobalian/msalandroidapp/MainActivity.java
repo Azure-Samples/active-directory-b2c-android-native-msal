@@ -101,7 +101,12 @@ public class MainActivity extends AppCompatActivity {
             if (users != null && users.size() == 1) {
                 /* We have 1 user */
                 currentUser = users.get(0);
-                sampleApp.acquireTokenSilentAsync(scopes, currentUser, getAuthSilentCallback());
+                sampleApp.acquireTokenSilentAsync(
+                        scopes,
+                        currentUser,
+                        String.format(Constants.AUTHORITY, Constants.TENANT, Constants.SISU_POLICY),
+                        false,
+                        getAuthSilentCallback());
             } else {
                 /* We have multiple users or none */
 
