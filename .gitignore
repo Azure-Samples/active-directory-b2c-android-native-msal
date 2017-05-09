@@ -11,4 +11,3 @@ android-client/.idea
 .externalNativeBuild
 android-client/msal/build
 android-client/build
-helloAPI/node_modules
