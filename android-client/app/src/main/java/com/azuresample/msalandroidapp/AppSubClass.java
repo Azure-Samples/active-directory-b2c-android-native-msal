@@ -1,4 +1,4 @@
-package com.danieldobalian.msalandroidapp;
+package com.azuresample.msalandroidapp;
 
 import android.app.Application;
 import android.content.res.Configuration;

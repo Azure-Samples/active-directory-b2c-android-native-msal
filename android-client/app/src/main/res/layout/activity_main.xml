@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/white"
     android:orientation="vertical"
-    tools:context="com.danieldobalian.msalandroidapp.MainActivity">
+    tools:context="com.azuresample.msalandroidapp.MainActivity">
 
     <TextView
         android:id="@+id/aadText"

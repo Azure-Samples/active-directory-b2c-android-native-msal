@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.danieldobalian.msalandroidapp">
+    package="com.azuresample.msalandroidapp">
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -8,11 +8,11 @@
     <application
         android:allowBackup="true"
         android:icon="@drawable/microsoft_logo"
-        android:name=".AppSubClass"
+        android:name="com.azuresample.msalandroidapp.AppSubClass"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.NoActionBar">
-        <activity android:name=".MainActivity">
+        <activity android:name="com.azuresample.msalandroidapp.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -20,7 +20,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".AuthenticatedActivity"
+            android:name="com.azuresample.msalandroidapp.AuthenticatedActivity"
             android:label="@string/title_activity_authenticated"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
 
@@ -39,7 +39,7 @@
         </activity>
 
         <activity
-            android:name=".LearnMoreActivity"
+            android:name="com.azuresample.msalandroidapp.LearnMoreActivity"
             android:label="@string/title_activity_learn_more"
             android:theme="@style/Theme.AppCompat.NoActionBar"></activity>
     </application>

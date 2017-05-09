@@ -1,4 +1,4 @@
-package com.danieldobalian.msalandroidapp;
+package com.azuresample.msalandroidapp;
 
 /**
  * Created by dadaboli on 4/20/17.
