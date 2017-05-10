@@ -9,10 +9,10 @@ author: danieldobalian
 | [Library](https://github.com/AzureAD/microsoft-authentication-library-for-android) | [API Reference](http://javadoc.io/doc/com.microsoft.identity.client/msal) | [Support](README.md#community-help-and-support)
 | --- | --- | --- |
 
-The MSAL Android preview gives your app the ability to begin using the [Microsoft Cloud](https://cloud.microsoft.com) by supporting [Microsoft Azure Active Directory](https://azure.microsoft.com/en-us/services/active-directory/) and [Microsoft Accounts](https://account.microsoft.com) in a converged experience using industry standard OAuth2 and OpenID Connect. This sample demonstrates all the normal lifecycles your application should experience, including:
+The MSAL Android preview gives your app the ability to begin using the [Microsoft Cloud](https://cloud.microsoft.com) by supporting [Azure B2C](https://azure.microsoft.com/en-us/services/active-directory-b2c/) using industry standard OAuth2 and OpenID Connect.  This sample demonstrates all the normal life cycles your application should experience, including:
 
 * Sign in a user with Local Accounts or Social Identity Providers
-* Get an Acces Token for a Web Service
+* Get an Access Token for a Web Service
 * Call the Web Service
 * Edit the User's Profile
 * Sign out the user
@@ -42,7 +42,7 @@ Checkout [the sample Web Service](https://github.com/Azure-Samples/active-direct
 
 ## Steps to Run
 
-1. Clone the code. 
+1. Clone the code.
     ```
     git clone https://github.com/Azure-Samples/active-directory-b2c-android-native-msal.git
     ```
@@ -71,7 +71,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
 ## Security Library
 
-This library controls how users sign-in and access services. We recommend you always take the latest version of our library in your app when possible. We use [semantic versioning](http://semver.org) so you can control the risk associated with updating your app. As an example, always downloading the latest minor version number (e.g. x.*y*.x) ensures you get the latest security and feature enhanements but our API surface remains the same. You can always see the latest version and release notes under the Releases tab of GitHub.
+This library controls how users sign-in and access services. We recommend you always take the latest version of our library in your app when possible. We use [semantic versioning](http://semver.org) so you can control the risk associated with updating your app. As an example, always downloading the latest minor version number (e.g. x.*y*.x) ensures you get the latest security and feature enhancements but our API surface remains the same. You can always see the latest version and release notes under the Releases tab of GitHub.
 
 ## Security Reporting
 
