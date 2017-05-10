@@ -44,9 +44,9 @@ Checkout [the sample Web Service](https://github.com/Azure-Samples/active-direct
 
 1. Clone the code. 
     ```
-    git clone https://github.com/Azure-Samples/active-directory-android-native-v2 
+    git clone https://github.com/Azure-Samples/active-directory-b2c-android-native-msal.git
     ```
-2. Open Android Studio 2, and select *open an existing Android Studio project*. Find the cloned project and open it. 
+2. Open Android Studio 2, and select *open an existing Android Studio project*. Find the cloned project and open *android-client*. 
 
 3. Select *Build* > *Clean Project*. 
 
