@@ -36,7 +36,7 @@ authenticationResult.getAccessToken();
 
 The app comes pre-configured for testing.  If you would like to register your own app, please follow the steps below. 
 
-You will need to have a native client application registered with Microsoft using the [Microsoft Identity App Registration Portal](https://docs.microsoft.com/en-us/azure/active-directory-b2c/active-directory-b2c-app-registration).
+You will need to have a native client application registered with Microsoft using the [Azure Portal](https://docs.microsoft.com/en-us/azure/active-directory-b2c/active-directory-b2c-app-registration).  Once done, update your app configs in ***Constants.Java***.
 
 Checkout [the sample Web Service](https://github.com/Azure-Samples/active-directory-b2c-javascript-nodejs-webapi) code to run it on your own!
 
