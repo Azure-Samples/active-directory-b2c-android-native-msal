@@ -149,34 +149,23 @@ public class AuthenticatedActivity extends AppCompatActivity {
     private void editProfile() {
         Log.d(TAG, "Starting volley request to API");
         try {
-            List<User> users = sampleApp.getUsers();
             String authority = String.format(Constants.AUTHORITY,
                     Constants.TENANT,
                     Constants.EDIT_PROFILE_POLICY);
-            if (users.size() == 1) {
-                /* We have 1 user */
-                sampleApp.acquireToken(
-                        this,
-                        Constants.SCOPES.split("\\s+"),
-                        users.get(0),
-                        UiBehavior.SELECT_ACCOUNT,
-                        null,
-                        null,
-                        authority,
-                        getEditPolicyCallback());
-            } else
-            {
-                /* Multiple or no users*/
-                sampleApp.acquireToken(
-                        this,
-                        Constants.SCOPES.split("\\s+"),
-                        (User) null,
-                        UiBehavior.SELECT_ACCOUNT,
-                        null,
-                        null,
-                        authority,
-                        getEditPolicyCallback());
-            }
+
+            User currentUser = Helpers.getUserByPolicy(
+                    sampleApp.getUsers(),
+                    Constants.EDIT_PROFILE_POLICY);
+
+            sampleApp.acquireToken(
+                    this,
+                    Constants.SCOPES.split("\\s+"),
+                    currentUser,
+                    UiBehavior.SELECT_ACCOUNT,
+                    null,
+                    null,
+                    authority,
+                    getEditPolicyCallback());
         } catch(MsalClientException e) {
             /* No User */
             Log.d(TAG, "MSAL Exception Generated while getting users: " + e.toString());
@@ -274,24 +263,19 @@ public class AuthenticatedActivity extends AppCompatActivity {
          */
         List<User> users = null;
         try {
-            users = sampleApp.getUsers();
+            User currentUser = Helpers.getUserByPolicy(sampleApp.getUsers(), Constants.SISU_POLICY);
 
-            if (users != null && users.size() == 1) {
+            if (currentUser != null) {
             /* We have 1 user */
                 boolean forceRefresh = true;
                 sampleApp.acquireTokenSilentAsync(
                         scopes,
-                        users.get(0),
+                        currentUser,
                         String.format(Constants.AUTHORITY, Constants.TENANT, Constants.SISU_POLICY),
                         forceRefresh,
                         getAuthSilentCallback());
             } else {
-                /* We have multiple users or none*/
-
-                /* This app does not support multiple users.
-                 * Typically, multiple user scenarios depend on app logic to have some
-                 * kind of heuristic to determine user to use (or some ui)
-                 */
+                /* We have no user for this policy*/
                 updateRefreshTokenUI(false);
             }
         } catch (MsalClientException e) {
@@ -369,8 +353,6 @@ public class AuthenticatedActivity extends AppCompatActivity {
             @Override
             public void onSuccess(AuthenticationResult authenticationResult) {
                 /* Successfully got a token */
-//                Toast.makeText(getBaseContext(), getString(R.string.editSuccess), Toast.LENGTH_SHORT)
-//                        .show();
 
                 /* Use this method to refresh our token with new claims */
                 Log.d(TAG, "Edit Profile: " + authenticationResult.getAccessToken());
@@ -381,8 +363,7 @@ public class AuthenticatedActivity extends AppCompatActivity {
             public void onError(MsalException exception) {
                 /* Failed to acquireToken */
                 Log.d(TAG, "Edit Profile failed: " + exception.toString());
-//                Toast.makeText(getBaseContext(), getString(R.string.editFailure), Toast.LENGTH_SHORT)
-//                        .show();
+
                 if (exception instanceof MsalClientException) {
                     /* Exception inside MSAL, more info inside MsalError.java */
                     assert true;

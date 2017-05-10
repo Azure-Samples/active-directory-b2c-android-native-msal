@@ -17,7 +17,6 @@ public class MainActivity extends AppCompatActivity {
     /* Azure AD variables */
     private PublicClientApplication sampleApp;
     private AuthenticationResult authResult;
-    private User currentUser;
     private String[] scopes;
 
     /* UI & Debugging Variables */
@@ -94,13 +93,12 @@ public class MainActivity extends AppCompatActivity {
          */
         Log.d(TAG, "Call API Clicked");
 
-        List<User> users = null;
         try {
-            users = sampleApp.getUsers();
+            User currentUser = Helpers.getUserByPolicy(sampleApp.getUsers(), Constants.SISU_POLICY);
 
-            if (users != null && users.size() == 1) {
+            if (currentUser != null) {
                 /* We have 1 user */
-                currentUser = users.get(0);
+
                 sampleApp.acquireTokenSilentAsync(
                         scopes,
                         currentUser,
@@ -108,12 +106,7 @@ public class MainActivity extends AppCompatActivity {
                         false,
                         getAuthSilentCallback());
             } else {
-                /* We have multiple users or none */
-
-                /* This app does not support multiple users.
-                 * Typically, multiple user scenarios depend on app logic to have some
-                 * kind of heuristic to determine user to use (or some ui to pick)
-                 */
+                /* We have no user */
                 sampleApp.acquireToken(getActivity(), scopes, getAuthInteractiveCallback());
             }
         } catch (MsalClientException e) {
