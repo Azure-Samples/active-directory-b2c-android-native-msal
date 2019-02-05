@@ -23,11 +23,16 @@ public class MainActivity extends AppCompatActivity {
 
     /* B2C Constants */
     final static String B2C_SCOPES [] = {"https://fabrikamb2c.onmicrosoft.com/helloapi/demo.read"};
+
+    // These scopes are required but not used for actual tokens
+    final static String B2C_EDIT_SCOPES [] = {"https://fabrikamb2c.onmicrosoft.com/helloapi/demo.read"};
+    final static String B2C_RESET_SCOPES [] = {"https://fabrikamb2c.onmicrosoft.com/helloapi/demo.read"};
+
     final static String API_URL = "https://fabrikamb2chello.azurewebsites.net/hello";
 
-//    final static String SISU_POLICY = "https://login.microsoftonline.com/tfp/fabrikamb2c.onmicrosoft.com/B2C_1_SUSI";
-//    final static String EDIT_PROFILE_POLICY = "https://login.microsoftonline.com/tfp/fabrikamb2c.onmicrosoft.com/B2C_1_edit_profile";
-
+    final static String SISU_POLICY = "https://login.microsoftonline.com/tfp/fabrikamb2c.onmicrosoft.com/B2C_1_SUSI";
+    final static String EDIT_PROFILE_POLICY = "https://login.microsoftonline.com/tfp/fabrikamb2c.onmicrosoft.com/B2C_1_edit_profile";
+    final static String RESET_PASSWORD_POLICY = "https://login.microsoftonline.com/tfp/fabrikamb2c.onmicrosoft.com/B2C_1_reset";
 
     /* Azure AD v2 Configs */
 //    final static String SCOPES [] = {"https://graph.microsoft.com/User.Read"};
@@ -35,7 +40,9 @@ public class MainActivity extends AppCompatActivity {
 
     /* UI & Debugging Variables */
     private static final String TAG = MainActivity.class.getSimpleName();
-    Button callApiButton;
+    Button linkAccountButton;
+    Button resetPasswordButton;
+    Button editProfileButton;
     Button signOutButton;
 
     /* Azure AD Variables */
@@ -49,12 +56,26 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        callApiButton = (Button) findViewById(R.id.callApi);
+        linkAccountButton = (Button) findViewById(R.id.linkAccount);
+        resetPasswordButton = (Button) findViewById(R.id.resetPassword);
+        editProfileButton = (Button) findViewById(R.id.edit);
         signOutButton = (Button) findViewById(R.id.clearCache);
 
-        callApiButton.setOnClickListener(new View.OnClickListener() {
+        linkAccountButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                onCallApiClicked();
+                onLinkAccountClicked();
+            }
+        });
+
+        resetPasswordButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                onResetPasswordClicked();
+            }
+        });
+
+        editProfileButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                onEditProfileClicked();
             }
         });
 
@@ -111,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
     // Core Identity methods used by MSAL
     // ==================================
     // onActivityResult() - handles redirect from System browser
-    // onCallApiClicked() - attempts to get tokens for the API, if it succeeds calls the API & updates UI
+    // onLinkAccountClicked() - attempts to get tokens for the API, if it succeeds calls the API & updates UI
     // onSignOutClicked() - Signs account out of the app & updates UI
     // callApi() - called on successful token acquisition which makes an HTTP request to our API
     //
@@ -125,8 +146,22 @@ public class MainActivity extends AppCompatActivity {
     /* Use MSAL to acquireToken for the end-user
      * Callback will call api w/ access token & update UI
      */
-    private void onCallApiClicked() {
+    private void onLinkAccountClicked() {
         sampleApp.acquireToken(getActivity(), B2C_SCOPES, getAuthInteractiveCallback());
+    }
+
+    /* Use MSAL to reset the users password
+     * Callback should call a SiSu policy I think
+     */
+    private void onResetPasswordClicked() {
+        // TODO: Acquire token for reset password. Probably need new scopes, policy, and new callback
+    }
+
+    /* Use MSAL to edit their profile
+     * Callback should land them on auth'd page.
+     */
+    private void onEditProfileClicked() {
+        // TODO: Acquire token for reset password. Probably need new scopes, policy, and new callback
     }
 
     /* Clears an account's tokens from the cache.
@@ -228,17 +263,25 @@ public class MainActivity extends AppCompatActivity {
 
     /* Set the UI for successful token acquisition data */
     private void updateSuccessUI() {
-        callApiButton.setVisibility(View.INVISIBLE);
+        // hide the old buttons
+        linkAccountButton.setVisibility(View.INVISIBLE);
+        resetPasswordButton.setVisibility(View.INVISIBLE);
+
+        // display sign out and edit buttons
         signOutButton.setVisibility(View.VISIBLE);
+        editProfileButton.setVisibility(View.VISIBLE);
         findViewById(R.id.welcome).setVisibility(View.VISIBLE);
-        ((TextView) findViewById(R.id.welcome)).setText("Welcome, " +
-                authResult.getAccount().getUsername());
+        ((TextView) findViewById(R.id.welcome)).setText("Welcome! \n\nYour unique identifier is: " +
+                authResult.getAccount().getAccountIdentifier());
         findViewById(R.id.apiData).setVisibility(View.VISIBLE);
     }
 
     /* Set the UI for signed out account */
     private void updateSignedOutUI() {
-        callApiButton.setVisibility(View.VISIBLE);
+        linkAccountButton.setVisibility(View.VISIBLE);
+        resetPasswordButton.setVisibility(View.VISIBLE);
+
+        editProfileButton.setVisibility(View.INVISIBLE);
         signOutButton.setVisibility(View.INVISIBLE);
         findViewById(R.id.welcome).setVisibility(View.INVISIBLE);
         findViewById(R.id.apiData).setVisibility(View.INVISIBLE);

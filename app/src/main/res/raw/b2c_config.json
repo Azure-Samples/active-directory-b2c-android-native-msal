@@ -12,6 +12,11 @@
       "type": "B2C",
       "authority_url": "https://login.microsoftonline.com/tfp/fabrikamb2c.onmicrosoft.com/B2C_1_edit_profile",
       "default": false
+    },
+    {
+      "type": "B2C",
+      "authority_url": "https://login.microsoftonline.com/tfp/fabrikamb2c.onmicrosoft.com/B2C_1_reset",
+      "default": false
     }
   ]
 }

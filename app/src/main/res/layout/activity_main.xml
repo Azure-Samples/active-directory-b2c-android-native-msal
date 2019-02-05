@@ -20,13 +20,23 @@
         android:visibility="invisible"/>
 
     <Button
-        android:id="@+id/callApi"
-        android:text="Call the protected API"
+        android:id="@+id/linkAccount"
+        android:text="Link Account"
         android:textColor="#FFFFFF"
         android:background="#00a1f1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="200dp"
+        android:layout_marginTop="10dp"
+        android:textAllCaps="false" />
+
+    <Button
+        android:id="@+id/resetPassword"
+        android:text="Forgot Password?"
+        android:textColor="#FFFFFF"
+        android:background="#00a1f1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:textAllCaps="false" />
 
     <TextView
@@ -44,6 +54,17 @@
         android:layout_weight="1"
         android:gravity="center|bottom"
         android:orientation="vertical" >
+
+        <Button
+            android:text="Edit your Profile"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="15dp"
+            android:textColor="#FFFFFF"
+            android:background="#00a1f1"
+            android:textAllCaps="false"
+            android:id="@+id/edit"
+            android:visibility="invisible" />
 
         <Button
             android:text="Sign Out"
