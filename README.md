@@ -1,34 +1,29 @@
 --- 
-Services: active-directory
+Services: active-directory-b2c
 platforms: Android
 author: danieldobalian
 level: 100
 client: Android Mobile App
-service: Microsoft Graph
-endpoint: AAD V2
+endpoint: AAD B2C
 ---
-# MSAL Android Sample Microsoft Graph API Sample 
+# Integrate Azure AD B2C into your Android app 
 
-| [Getting Started](https://docs.microsoft.com/azure/active-directory/develop/guidedsetups/active-directory-android)| [Library](https://github.com/AzureAD/microsoft-authentication-library-for-android) | [API Reference](http://javadoc.io/doc/com.microsoft.identity.client/msal) | [Support](README.md#community-help-and-support)
+| [Getting Started](https://docs.microsoft.com/en-us/azure/active-directory-b2c/active-directory-b2c-overview)| [Library](https://github.com/AzureAD/microsoft-authentication-library-for-android) | [API Reference](http://javadoc.io/doc/com.microsoft.identity.client/msal) | [Support](https://docs.microsoft.com/en-us/azure/active-directory-b2c/active-directory-b2c-support)
 | --- | --- | --- | --- |
 
-NOTE: This README is for the Azure AD code sample and is not instructions for using b2c. Please see MASTER branch. 
+Azure AD B2C is an identity management service that enables you to customize and control how customers sign up, sign in, and manage their profiles when using your application. This code sample will walk you through how to integrate Azure AD B2C into your app using the Microsoft Authentication Library for Android (MSAL). 
 
-The MSAL Android preview gives your app the ability to begin using the
-[Microsoft Azure Cloud](https://cloud.microsoft.com) by supporting [Microsoft Azure Active Directory](https://azure.microsoft.com/en-us/services/active-directory/) and [Microsoft Accounts](https://account.microsoft.com) in a converged experience using industry standard OAuth2 and OpenID Connect. This sample demonstrates all the normal lifecycles your application should experience, including:
+This sample will show you how to, 
 
-* Get a token for the Microsoft Graph
-* Refresh a token
-* Call the Microsoft Graph
+* Sign in or sign up a user
+* Refresh their session silently
+* Use tokens to securely call APIs
+* Edit the user's profile
 * Sign out the user
 
-## Scenario
+## Example Code
 
-This app is a multi-tenant app meaning it can be used by any Azure AD tenant or Microsoft Account.  It demonstrates how a developer can build apps to connect with enterprise users and access their Azure + O365 data via the Microsoft Graph.  During the auth flow, end users will be required to sign in and consent to the permissions of the application, and in some cases may require an admin to consent to the app.  The majority of the logic in this sample shows how to auth an end user and make a basic call to the Microsoft Graph.
-
-![Topology](./images/topology.png)
-
-## Example
+The MSAL library abstracts away most the complexity of Auth. Once initialized, your app can use MSAL to interactively or silently request tokens for APIs. 
 
 ```Java
 // Initialize your app with MSAL
@@ -41,7 +36,7 @@ pApp.acquireToken(getActivity(), SCOPES, getAuthInteractiveCallback());
 
 // ...
 
-// Get tokens to call APIs like the Microsoft Graph
+// Get tokens to call APIs
 authenticationResult.getAccessToken();
 ```
 
@@ -51,25 +46,7 @@ The app comes pre-configured for trying the sample.  If you would like to regist
 the steps below. 
 
 You will need to have a native client application registered with Microsoft using the 
-[App Registration Portal](https://apps.dev.microsoft.com/portal/register-app?appType=mobileAndDesktopApp&appTech=android). 
-
-To create an app,  
-1. Click the `Add an app` button inside the *Converged Apps* section.
-
-2. Name your app and select `Create`. 
-    - Do not check `Let us help you get started.
-    - After the app is created, you'll land on your app management page. 
-
-3. Click `Add Platform`, then select `Native Application`. 
-    - The Redirect URI produced is needed when making Auth requests. If you're using MSAL, it will
-    be automatically constructed by the library unless you do a custom configuration. 
-
-4. Hit the `Save` button. 
-
-5. Save your `Application/Client ID` and `Redirect/Reply URI` for when you clone the code:
-    - Add the `Application/Client ID` to the AndroidManifest.xml's <intent-filter>
-    - Add the `Application/Client ID` to the `client_id` value inside `res/raw/auth_config.json`
-    - Add the `Redirect/Reply URI` to the `redirect_uri` inside `res/raw/auth_config.json`
+[Azure portal](https://docs.microsoft.com/en-us/azure/active-directory-b2c/active-directory-b2c-app-registration). Once done, update the ***b2c_config.json*** file in the sample. 
 
 ## Steps to Run
 
@@ -77,12 +54,11 @@ To create an app,
     ```
     git clone https://github.com/Azure-Samples/active-directory-android-native-v2 
     ```
-2. Open Android Studio 3, and select *open an existing Android Studio project*. Find the cloned project and open it. 
+2. Open Android Studio 3+, and select *open an existing Android Studio project*. Find the cloned project and open it. 
 
 3. Select *Build* > *Clean Project*. 
 
-4. Select *Run* > *Run 'app'*. Make sure the emulator you're using has Chrome, if it doesn't follow 
-[these steps](https://github.com/Azure-Samples/active-directory-general-docs/blob/master/AndroidEmulator.md). 
+4. Select *Run* > *Run 'app'*. 
 
 ## Feedback, Community Help, and Support
 
