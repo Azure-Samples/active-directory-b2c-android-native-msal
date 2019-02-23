@@ -2,6 +2,7 @@ package com.azuresamples.msalandroidapp;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,67 +10,70 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.util.Pair;
 import com.android.volley.*;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import org.json.JSONObject;
+
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
+
 import com.microsoft.identity.client.*;
 import com.microsoft.identity.client.exception.*;
+
+import com.nimbusds.jwt.JWT;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.JWTParser;
 
 public class MainActivity extends AppCompatActivity {
 
     /* B2C Constants */
     final static String B2C_SCOPES [] = {"https://fabrikamb2c.onmicrosoft.com/helloapi/demo.read"};
 
-    // These scopes are required but not used for actual tokens
+    /* These scopes are required but not used for actual tokens */
     final static String B2C_EDIT_SCOPES [] = {"https://fabrikamb2c.onmicrosoft.com/helloapi/demo.read"};
     final static String B2C_RESET_SCOPES [] = {"https://fabrikamb2c.onmicrosoft.com/helloapi/demo.read"};
 
+    /* URL of the API we want to request data from */
     final static String API_URL = "https://fabrikamb2chello.azurewebsites.net/hello";
 
     final static String SISU_POLICY = "https://login.microsoftonline.com/tfp/fabrikamb2c.onmicrosoft.com/B2C_1_SUSI";
     final static String EDIT_PROFILE_POLICY = "https://login.microsoftonline.com/tfp/fabrikamb2c.onmicrosoft.com/B2C_1_edit_profile";
     final static String RESET_PASSWORD_POLICY = "https://login.microsoftonline.com/tfp/fabrikamb2c.onmicrosoft.com/B2C_1_reset";
 
-    /* Azure AD v2 Configs */
-//    final static String SCOPES [] = {"https://graph.microsoft.com/User.Read"};
-//    final static String MSGRAPH_URL = "https://graph.microsoft.com/v1.0/me";
-
     /* UI & Debugging Variables */
     private static final String TAG = MainActivity.class.getSimpleName();
-    Button linkAccountButton;
-    Button resetPasswordButton;
+    Button loginButton;
     Button editProfileButton;
     Button signOutButton;
 
     /* Azure AD Variables */
     private PublicClientApplication sampleApp;
     private AuthenticationResult authResult;
+    private String curDomainHint;
 
     private StringBuilder mLogs;
 
+
+    //
+    // Initiate all our UI, MSAL/B2C
+    //
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        linkAccountButton = (Button) findViewById(R.id.linkAccount);
-        resetPasswordButton = (Button) findViewById(R.id.resetPassword);
+        loginButton = (Button) findViewById(R.id.login);
         editProfileButton = (Button) findViewById(R.id.edit);
         signOutButton = (Button) findViewById(R.id.clearCache);
 
-        linkAccountButton.setOnClickListener(new View.OnClickListener() {
+        loginButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                onLinkAccountClicked();
-            }
-        });
-
-        resetPasswordButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                onResetPasswordClicked();
+                onLoginClicked();
             }
         });
 
@@ -93,9 +97,14 @@ public class MainActivity extends AppCompatActivity {
                     R.raw.b2c_config);
         }
 
+        /* load in any identity provider we stored */
+        curDomainHint = PreferenceManager
+                .getDefaultSharedPreferences(getBaseContext())
+                .getString("idp", null);
+
         /* Enable logging */
         mLogs = new StringBuilder();
-        Logger.getInstance().setLogLevel(Logger.LogLevel.VERBOSE);
+        Logger.getInstance().setLogLevel(Logger.LogLevel.INFO);
         Logger.getInstance().setEnablePII(true);
         Logger.getInstance().setEnableLogcatLog(true);
         Logger.getInstance().setExternalLogger(new ILoggerCallback() {
@@ -105,26 +114,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
-
-        /* Attempt to get a user and acquireTokenSilent
-         * If this fails we do an interactive request
+        /* Attempt to get a user and get a token silently
+         * If this fails we will do an interactive request
          */
-        List<IAccount> accounts = null;
-
-        try {
-            accounts = sampleApp.getAccounts();
-
-            if (accounts != null && accounts.size() == 1) {
-                /* We have 1 account */
-
-                sampleApp.acquireTokenSilentAsync(B2C_SCOPES, accounts.get(0), getAuthSilentCallback());
-            } else {
-                /* We have no account or >1 account */
-            }
-        } catch (IndexOutOfBoundsException e) {
-            Log.d(TAG, "Account at this position does not exist: " + e.toString());
-        }
+        silentRequest(false);
 
     }
 
@@ -132,7 +125,10 @@ public class MainActivity extends AppCompatActivity {
     // Core Identity methods used by MSAL
     // ==================================
     // onActivityResult() - handles redirect from System browser
-    // onLinkAccountClicked() - attempts to get tokens for the API, if it succeeds calls the API & updates UI
+    // silentRequest() - tries to silently get tokens for a user
+    // onLoginClicked() - attempts to get tokens for the API, if it succeeds calls the API & updates UI
+    // resetPassword() - resets the user password then kicks off the login flow.
+    // onEditProfileClicked() - pops dialogue for user to edit their profiel then gets fresh tokens.
     // onSignOutClicked() - Signs account out of the app & updates UI
     // callApi() - called on successful token acquisition which makes an HTTP request to our API
     //
@@ -143,25 +139,93 @@ public class MainActivity extends AppCompatActivity {
         sampleApp.handleInteractiveRequestRedirect(requestCode, resultCode, data);
     }
 
+    private void silentRequest(boolean forceRefresh) {
+        /* Attempt to get a user and get a token silently
+         * If this fails we will do an interactive request
+         */
+        List<IAccount> accounts = null;
+
+        try {
+            accounts = sampleApp.getAccounts();
+
+            if (accounts != null && accounts.size() == 1) {
+                /* We have 1 account */
+                sampleApp.acquireTokenSilentAsync(
+                        B2C_SCOPES,
+                        accounts.get(0),
+                        SISU_POLICY,
+                        forceRefresh,
+                        getAuthSilentCallback());
+            } else {
+                /* We have no account or 2 or more accounts */
+            }
+        } catch (IndexOutOfBoundsException e) {
+            Log.d(TAG, "Account at this position does not exist: " + e.toString());
+        }
+
+    }
+
     /* Use MSAL to acquireToken for the end-user
      * Callback will call api w/ access token & update UI
      */
-    private void onLinkAccountClicked() {
-        sampleApp.acquireToken(getActivity(), B2C_SCOPES, getAuthInteractiveCallback());
+    private void onLoginClicked() {
+        if (curDomainHint != null) {
+            List idProvider = new ArrayList<Pair<String, String>>();
+            idProvider.add(new Pair<String, String>("domain_hint", curDomainHint));
+            sampleApp.acquireToken(
+                    getActivity(),
+                    B2C_SCOPES,
+                    (String) null,
+                    UiBehavior.SELECT_ACCOUNT,
+                    idProvider,
+                    getAuthInteractiveCallback());
+        } else {
+            sampleApp.acquireToken(
+                    getActivity(),
+                    B2C_SCOPES,
+                    getAuthInteractiveCallback());
+        }
     }
 
     /* Use MSAL to reset the users password
      * Callback should call a SiSu policy I think
      */
-    private void onResetPasswordClicked() {
-        // TODO: Acquire token for reset password. Probably need new scopes, policy, and new callback
+    private void resetPassword() {
+        sampleApp.acquireToken(
+                getActivity(),
+                B2C_RESET_SCOPES,
+                RESET_PASSWORD_POLICY,
+                getResetCallback());
     }
 
     /* Use MSAL to edit their profile
-     * Callback should land them on auth'd page.
+     * Callback will land them on authenticated page.
      */
     private void onEditProfileClicked() {
-        // TODO: Acquire token for reset password. Probably need new scopes, policy, and new callback
+        if (curDomainHint != null) {
+            List idProvider = new ArrayList<Pair<String, String>>();
+            idProvider.add(new Pair<String, String>("domain_hint", curDomainHint));
+
+            sampleApp.acquireToken(
+                    getActivity(),
+                    B2C_EDIT_SCOPES,
+                    (String) null,
+                    UiBehavior.SELECT_ACCOUNT,
+                    idProvider,
+                    null,
+                    EDIT_PROFILE_POLICY,
+                    getEditCallback());
+        } else {
+            sampleApp.acquireToken(
+                    getActivity(),
+                    B2C_EDIT_SCOPES,
+                    (String) null,
+                    UiBehavior.SELECT_ACCOUNT,
+                    null,
+                    null,
+                    EDIT_PROFILE_POLICY,
+                    getEditCallback());
+        }
     }
 
     /* Clears an account's tokens from the cache.
@@ -192,7 +256,10 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            Toast.makeText(getBaseContext(), "Signed Out!", Toast.LENGTH_SHORT)
+            /* Set identity/domain provider hint to null */
+            curDomainHint = null;
+
+            Toast.makeText(getBaseContext(), "Signed Out", Toast.LENGTH_SHORT)
                     .show();
 
         } catch (IndexOutOfBoundsException e) {
@@ -258,28 +325,27 @@ public class MainActivity extends AppCompatActivity {
     /* Sets the API response */
     private void updateApiUI(JSONObject apiResponse) {
         TextView apiText = (TextView) findViewById(R.id.apiData);
-        apiText.setText(apiResponse.toString());
+        apiText.setText("API Response: " + apiResponse.toString());
     }
 
     /* Set the UI for successful token acquisition data */
     private void updateSuccessUI() {
         // hide the old buttons
-        linkAccountButton.setVisibility(View.INVISIBLE);
-        resetPasswordButton.setVisibility(View.INVISIBLE);
+        loginButton.setVisibility(View.INVISIBLE);
 
         // display sign out and edit buttons
         signOutButton.setVisibility(View.VISIBLE);
         editProfileButton.setVisibility(View.VISIBLE);
         findViewById(R.id.welcome).setVisibility(View.VISIBLE);
-        ((TextView) findViewById(R.id.welcome)).setText("Welcome! \n\nYour unique identifier is: " +
-                authResult.getAccount().getAccountIdentifier());
+        ((TextView) findViewById(R.id.welcome)).setText(
+                "Welcome!\n\n\n\nUser's unique identifier\n\n" +
+                authResult.getAccount().getAccountIdentifier().getIdentifier());
         findViewById(R.id.apiData).setVisibility(View.VISIBLE);
     }
 
     /* Set the UI for signed out account */
     private void updateSignedOutUI() {
-        linkAccountButton.setVisibility(View.VISIBLE);
-        resetPasswordButton.setVisibility(View.VISIBLE);
+        loginButton.setVisibility(View.VISIBLE);
 
         editProfileButton.setVisibility(View.INVISIBLE);
         signOutButton.setVisibility(View.INVISIBLE);
@@ -294,7 +360,8 @@ public class MainActivity extends AppCompatActivity {
     // getActivity() - returns activity so we can acquireToken within a callback
     // getAuthSilentCallback() - callback defined to handle acquireTokenSilent() case
     // getAuthInteractiveCallback() - callback defined to handle acquireToken() case
-    //
+    // getResetCallback() - callback defined to handle the acquireToken() for reset password
+    // getEditCallback() - callback defined to handle the acquireToken() for edit profile
 
     public Activity getActivity() {
         return this;
@@ -357,6 +424,22 @@ public class MainActivity extends AppCompatActivity {
                 /* Store the auth result */
                 authResult = authenticationResult;
 
+                /* Set the identity provider used for login */
+                try {
+                    Map<String, String> claims = parseJWT(authResult.getIdToken());
+                    curDomainHint = claims.get("idp");
+
+                    /* Store value into shared preferences */
+                    PreferenceManager
+                            .getDefaultSharedPreferences(getBaseContext()).edit()
+                            .putString("idp", curDomainHint)
+                            .apply();
+
+
+                } catch (ParseException e) {
+                    Log.d(TAG, e.toString());
+                }
+
                 /* call API */
                 callApi();
 
@@ -373,6 +456,12 @@ public class MainActivity extends AppCompatActivity {
                     /* Exception inside MSAL, more info inside MsalError.java */
                 } else if (exception instanceof MsalServiceException) {
                     /* Exception when communicating with the STS, likely config issue */
+
+                    /* AADB2C90118 indicates we need to invoke reset password */
+                    if (exception.getMessage().toUpperCase().contains("aadb2c90118")) {
+                        resetPassword();
+                    }
+
                 }
             }
 
@@ -382,5 +471,82 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "User cancelled login.");
             }
         };
+    }
+
+    private AuthenticationCallback getResetCallback() {
+        return new AuthenticationCallback() {
+            @Override
+            public void onSuccess(AuthenticationResult authenticationResult) {
+                sampleApp.removeAccount(authenticationResult.getAccount());
+
+                // Once user has reset password invoke the SiSu flow
+                onLoginClicked();
+            }
+
+            @Override
+            public void onError(MsalException exception) {
+                /* Failed to acquireToken */
+                Log.d(TAG, "Reset Password failed: " + exception.toString());
+
+                if (exception instanceof MsalClientException) {
+                    /* Exception inside MSAL, more info inside MsalError.java */
+                } else if (exception instanceof MsalServiceException) {
+                    /* Exception when communicating with the STS, likely config issue */
+                }
+            }
+
+            @Override
+            public void onCancel() {
+                /* User canceled the authentication */
+                Log.d(TAG, "User cancelled login.");
+            }
+        };
+    }
+
+    private AuthenticationCallback getEditCallback() {
+        return new AuthenticationCallback() {
+            @Override
+            public void onSuccess(AuthenticationResult authenticationResult) {
+                sampleApp.removeAccount(authenticationResult.getAccount());
+
+                /* Once the user has edited their profile, need to get updated claims via SiSu. */
+                onLoginClicked();
+
+            }
+
+            @Override
+            public void onError(MsalException exception) {
+                /* Failed to acquireToken */
+                Log.d(TAG, "Edit Profile failed: " + exception.toString());
+
+                if (exception instanceof MsalClientException) {
+                    /* Exception inside MSAL, more info inside MsalError.java */
+                } else if (exception instanceof MsalServiceException) {
+                    /* Exception when communicating with the STS, likely config issue */
+                }
+            }
+
+            @Override
+            public void onCancel() {
+                /* User canceled the authentication */
+                Log.d(TAG, "User cancelled login.");
+            }
+        };
+    }
+
+    /* Accepts an ID token and returns set of claims */
+    public static Map<String, String> parseJWT(final String idToken) throws ParseException {
+        final JWTClaimsSet claimsSet;
+        final JWT jwt = JWTParser.parse(idToken);
+        claimsSet = jwt.getJWTClaimsSet();
+        final Map<String, Object> claimsMap = claimsSet.getClaims();
+        final Map<String, String> claimsMapStr = new HashMap<>();
+
+        for (final Map.Entry<String, Object> entry : claimsMap.entrySet()) {
+            claimsMapStr.put(entry.getKey(), entry.getValue().toString());
+        }
+
+        return claimsMapStr;
+
     }
 }
