@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
                     Constants.CLIENT_ID,
                     String.format(Constants.AUTHORITY, Constants.TENANT, Constants.SISU_POLICY));
             state.setPublicClient(sampleApp);
+            sampleApp.setValidateAuthority(false);
 
             Logger.getInstance().setExternalLogger(new ILoggerCallback() {
                 @Override

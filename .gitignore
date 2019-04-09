@@ -11,3 +11,7 @@ android-client/.idea
 .externalNativeBuild
 android-client/msal/build
 android-client/build
+*.suo
+/.vs
+/out/production/main
+/android-client/app/src/main/gen/com/azuresample/msalandroidapp

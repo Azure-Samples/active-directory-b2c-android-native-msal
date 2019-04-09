@@ -7,7 +7,7 @@ package com.azuresample.msalandroidapp;
 public class Constants {
 
     /* Azure AD b2c Configs */
-    final static String AUTHORITY = "https://login.microsoftonline.com/tfp/%s/%s";
+    final static String AUTHORITY = "https://fabrikamb2c.b2clogin.com/tfp/%s/%s";
     final static String TENANT = "fabrikamb2c.onmicrosoft.com";
     final static String CLIENT_ID = "90c0fe63-bcf2-44d5-8fb7-b8bbc0b29dc6";
     final static String SCOPES = "https://fabrikamb2c.onmicrosoft.com/demoapi/demo.read";
