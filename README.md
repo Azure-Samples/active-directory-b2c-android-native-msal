@@ -57,6 +57,11 @@ Checkout [the sample Web Service](https://github.com/Azure-Samples/active-direct
 1. Redirect URI format: `msal<YOUR_CLIENT_ID>://auth` is strictly enforced by MSAL at the current time. 
 2. For other docs on Azure AD B2C, checkout [the B2C dev guide](https://docs.microsoft.com/en-us/azure/active-directory-b2c/active-directory-b2c-overview)
 
+> [!NOTE]
+>developers using the [Azure China Environment](https://docs.microsoft.com/en-us/azure/active-directory/develop/authentication-national-cloud), MUST use <your-tenant-name>.b2clogin.cn) authority, instead of `login.chinacloudapi.cn`.
+>
+> In order to use <your-tenant-name>.b2clogin.*, you will need to `setValidateAuthority(false)`. Learn more about using [b2clogin](https://docs.microsoft.com/en-us/azure/active-directory-b2c/b2clogin).
+
 ## Community Help and Support
 
 We use [Stack Overflow](http://stackoverflow.com/questions/tagged/azure-active-directory) with the community to provide support. We highly recommend you ask your questions on Stack Overflow first and browse existing issues to see if someone has asked your question before. 
