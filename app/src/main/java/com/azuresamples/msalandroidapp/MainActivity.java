@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -41,9 +42,10 @@ public class MainActivity extends AppCompatActivity {
     /* URL of the API we want to request data from */
     final static String API_URL = "https://fabrikamb2chello.azurewebsites.net/hello";
 
-    final static String SISU_POLICY = "https://login.microsoftonline.com/tfp/fabrikamb2c.onmicrosoft.com/B2C_1_SUSI";
-    final static String EDIT_PROFILE_POLICY = "https://login.microsoftonline.com/tfp/fabrikamb2c.onmicrosoft.com/B2C_1_edit_profile";
-    final static String RESET_PASSWORD_POLICY = "https://login.microsoftonline.com/tfp/fabrikamb2c.onmicrosoft.com/B2C_1_reset";
+    final static String SISU_POLICY = "https://fabrikamb2c.b2clogin.com/tfp/fabrikamb2c.onmicrosoft.com/B2C_1_SUSI";
+    final static String EDIT_PROFILE_POLICY = "https://fabrikamb2c.b2clogin.com/tfp/fabrikamb2c.onmicrosoft.com/B2C_1_edit_profile";
+    final static String RESET_PASSWORD_POLICY = "https://fabrikamb2c.b2clogin.com/tfp/fabrikamb2c.onmicrosoft.com/B2C_1_reset";
+
 
     /* UI & Debugging Variables */
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -53,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
 
     /* Azure AD Variables */
     private PublicClientApplication sampleApp;
-    private AuthenticationResult authResult;
+    private IAuthenticationResult authResult;
     private String curDomainHint;
 
     private StringBuilder mLogs;
@@ -91,11 +93,9 @@ public class MainActivity extends AppCompatActivity {
 
         /* Configure your sample app and save state for this activity */
         sampleApp = null;
-        if (sampleApp == null) {
-            sampleApp = new PublicClientApplication(
-                    this.getApplicationContext(),
-                    R.raw.b2c_config);
-        }
+        sampleApp = new PublicClientApplication(
+                this.getApplicationContext(),
+                R.raw.b2c_config);
 
         /* load in any identity provider we stored */
         curDomainHint = PreferenceManager
@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
 
         /* Enable logging */
         mLogs = new StringBuilder();
-        Logger.getInstance().setLogLevel(Logger.LogLevel.INFO);
+        Logger.getInstance().setLogLevel(Logger.LogLevel.VERBOSE);
         Logger.getInstance().setEnablePII(true);
         Logger.getInstance().setEnableLogcatLog(true);
         Logger.getInstance().setExternalLogger(new ILoggerCallback() {
@@ -139,29 +139,28 @@ public class MainActivity extends AppCompatActivity {
         sampleApp.handleInteractiveRequestRedirect(requestCode, resultCode, data);
     }
 
-    private void silentRequest(boolean forceRefresh) {
+    private void silentRequest(final boolean forceRefresh) {
         /* Attempt to get a user and get a token silently
          * If this fails we will do an interactive request
          */
-        List<IAccount> accounts = null;
+        sampleApp.getAccounts(new PublicClientApplication.AccountsLoadedCallback() {
+            @Override
+            public void onAccountsLoaded(final List<IAccount> accounts) {
 
-        try {
-            accounts = sampleApp.getAccounts();
-
-            if (accounts != null && accounts.size() == 1) {
-                /* We have 1 account */
-                sampleApp.acquireTokenSilentAsync(
-                        B2C_SCOPES,
-                        accounts.get(0),
-                        SISU_POLICY,
-                        forceRefresh,
-                        getAuthSilentCallback());
-            } else {
-                /* We have no account or 2 or more accounts */
+                if (!accounts.isEmpty()) {
+                    sampleApp.acquireTokenSilentAsync(
+                            B2C_SCOPES,
+                            accounts.get(0),
+                            SISU_POLICY,
+                            forceRefresh,
+                            getAuthSilentCallback());
+                } else {
+                    /* No accounts or >1 account */
+                    Log.d(TAG, "No Accounts found");
+                }
             }
-        } catch (IndexOutOfBoundsException e) {
-            Log.d(TAG, "Account at this position does not exist: " + e.toString());
-        }
+        });
+
 
     }
 
@@ -202,30 +201,23 @@ public class MainActivity extends AppCompatActivity {
      * Callback will land them on authenticated page.
      */
     private void onEditProfileClicked() {
-        if (curDomainHint != null) {
-            List idProvider = new ArrayList<Pair<String, String>>();
-            idProvider.add(new Pair<String, String>("domain_hint", curDomainHint));
+        List<Pair<String, String>> idProvider = null;
 
-            sampleApp.acquireToken(
-                    getActivity(),
-                    B2C_EDIT_SCOPES,
-                    (String) null,
-                    UiBehavior.SELECT_ACCOUNT,
-                    idProvider,
-                    null,
-                    EDIT_PROFILE_POLICY,
-                    getEditCallback());
-        } else {
-            sampleApp.acquireToken(
-                    getActivity(),
-                    B2C_EDIT_SCOPES,
-                    (String) null,
-                    UiBehavior.SELECT_ACCOUNT,
-                    null,
-                    null,
-                    EDIT_PROFILE_POLICY,
-                    getEditCallback());
+        if(!TextUtils.isEmpty(curDomainHint)){
+            idProvider = new ArrayList<>();
+            idProvider.add(new Pair<String, String>("domain_hint", curDomainHint));
         }
+
+        sampleApp.acquireToken(
+                getActivity(),
+                B2C_EDIT_SCOPES,
+                (String) null,
+                UiBehavior.SELECT_ACCOUNT,
+                idProvider,
+                null,
+                EDIT_PROFILE_POLICY,
+                getEditCallback());
+
     }
 
     /* Clears an account's tokens from the cache.
@@ -237,30 +229,39 @@ public class MainActivity extends AppCompatActivity {
         List<IAccount> accounts = null;
 
         try {
-            accounts = sampleApp.getAccounts();
+            // accounts = sampleApp.getAccounts();
 
-            if (accounts == null) {
-                /* We have no accounts */
+            sampleApp.getAccounts(new PublicClientApplication.AccountsLoadedCallback() {
+                @Override
+                public void onAccountsLoaded(final List<IAccount> accounts) {
+                    if (accounts == null) {
+                        /* We have no accounts */
+                        Log.d(TAG, "No Accounts found");
 
-            } else if (accounts.size() == 1) {
-                /* We have 1 account */
-                /* Remove from token cache */
-                sampleApp.removeAccount(accounts.get(0));
-                updateSignedOutUI();
+                    } else {
+                        for (final IAccount account : accounts) {
+                            sampleApp.removeAccount(
+                                    account,
+                                    new PublicClientApplication.AccountsRemovedCallback() {
+                                        @Override
+                                        public void onAccountsRemoved(Boolean isSuccess) {
+                                            if (isSuccess) {
+                                                /* successfully removed account */
 
-            }
-            else {
-                /* We have multiple accounts */
-                for (int i = 0; i < accounts.size(); i++) {
-                    sampleApp.removeAccount(accounts.get(i));
+                                            } else {
+                                                /* failed to remove account */
+                                            }
+                                        }
+                                    });
+                        }
+                        /* Set identity/domain provider hint to null */
+                        curDomainHint = null;
+
+                        Toast.makeText(getBaseContext(), "Signed Out", Toast.LENGTH_SHORT)
+                                .show();
+                    }
                 }
-            }
-
-            /* Set identity/domain provider hint to null */
-            curDomainHint = null;
-
-            Toast.makeText(getBaseContext(), "Signed Out", Toast.LENGTH_SHORT)
-                    .show();
+            });
 
         } catch (IndexOutOfBoundsException e) {
             Log.d(TAG, "User at this position does not exist: " + e.toString());
@@ -374,7 +375,7 @@ public class MainActivity extends AppCompatActivity {
     private AuthenticationCallback getAuthSilentCallback() {
         return new AuthenticationCallback() {
             @Override
-            public void onSuccess(AuthenticationResult authenticationResult) {
+            public void onSuccess(IAuthenticationResult authenticationResult) {
                 /* Successfully got a token, call API now */
                 Log.d(TAG, "Successfully authenticated");
 
@@ -416,7 +417,7 @@ public class MainActivity extends AppCompatActivity {
     private AuthenticationCallback getAuthInteractiveCallback() {
         return new AuthenticationCallback() {
             @Override
-            public void onSuccess(AuthenticationResult authenticationResult) {
+            public void onSuccess(IAuthenticationResult authenticationResult) {
                 /* Successfully got a token, call API now */
                 Log.d(TAG, "Successfully authenticated");
                 Log.d(TAG, "ID Token: " + authenticationResult.getIdToken());
@@ -476,8 +477,19 @@ public class MainActivity extends AppCompatActivity {
     private AuthenticationCallback getResetCallback() {
         return new AuthenticationCallback() {
             @Override
-            public void onSuccess(AuthenticationResult authenticationResult) {
-                sampleApp.removeAccount(authenticationResult.getAccount());
+            public void onSuccess(IAuthenticationResult authenticationResult) {
+                sampleApp.removeAccount(
+                        authenticationResult.getAccount(),
+                        new PublicClientApplication.AccountsRemovedCallback() {
+                            @Override
+                            public void onAccountsRemoved(Boolean isSuccess) {
+                                if (isSuccess) {
+                                    /* successfully removed account */
+                                } else {
+                                    /* failed to remove account */
+                                }
+                            }
+                        });
 
                 // Once user has reset password invoke the SiSu flow
                 onLoginClicked();
@@ -506,8 +518,19 @@ public class MainActivity extends AppCompatActivity {
     private AuthenticationCallback getEditCallback() {
         return new AuthenticationCallback() {
             @Override
-            public void onSuccess(AuthenticationResult authenticationResult) {
-                sampleApp.removeAccount(authenticationResult.getAccount());
+            public void onSuccess(IAuthenticationResult authenticationResult) {
+                sampleApp.removeAccount(
+                        authenticationResult.getAccount(),
+                        new PublicClientApplication.AccountsRemovedCallback() {
+                            @Override
+                            public void onAccountsRemoved(Boolean isSuccess) {
+                                if (isSuccess) {
+                                    /* successfully removed account */
+                                } else {
+                                    /* failed to remove account */
+                                }
+                            }
+                        });
 
                 /* Once the user has edited their profile, need to get updated claims via SiSu. */
                 onLoginClicked();
