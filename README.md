@@ -1,7 +1,12 @@
---- 
-Services: active-directory-b2c
-platforms: Android
-author: danieldobalian
+---
+languages:
+- java
+page_type: sample
+description: "This sample demonstrates all the normal life cycles your application should experience when using AAD."
+products:
+- azure
+- azure-active-directory
+urlFragment: integrate-aad-b2c-android
 ---
 
 # Integrate Azure AD B2C into an Android App Using MSAL  
@@ -9,7 +14,7 @@ author: danieldobalian
 | [Library](https://github.com/AzureAD/microsoft-authentication-library-for-android) | [API Reference](http://javadoc.io/doc/com.microsoft.identity.client/msal) | [Support](README.md#community-help-and-support)
 | --- | --- | --- |
 
-The MSAL Android preview gives your app the ability to begin using the [Microsoft Cloud](https://cloud.microsoft.com) by supporting [Azure B2C](https://azure.microsoft.com/en-us/services/active-directory-b2c/) using industry standard OAuth2 and OpenID Connect.  This sample demonstrates all the normal life cycles your application should experience, including:
+The MSAL Android preview gives your app the ability to begin using the [Microsoft Cloud](https://cloud.microsoft.com) by supporting [Azure B2C](https://azure.microsoft.com/services/active-directory-b2c/) using industry standard OAuth2 and OpenID Connect.  This sample demonstrates all the normal life cycles your application should experience, including:
 
 * Sign in a user with Local Accounts or Social Identity Providers
 * Get an Access Token for a Web Service
@@ -19,8 +24,7 @@ The MSAL Android preview gives your app the ability to begin using the [Microsof
 
 ## Code Snapshot
 
-```Java
-
+```java
 PublicClientApplication pApp = new PublicClientApplication(
                 this.getApplicationContext(),
                 Constants.CLIENT_ID,
